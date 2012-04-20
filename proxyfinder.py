@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import datetime
 from optparse import OptionParser
+
+import pymongo
 
 from spider import ProxyFinder
 
@@ -13,12 +16,48 @@ class Finder(ProxyFinder):
     сохранения найденных прокси
     '''
 
-    def save_proxies(self, proxies):
+    def prepare(self):
         '''
-        Сохраняет найденные прокси в *А КУДА?*
+        Подготовка к работе
         '''
 
-        # TODO: и где епта?
+        connection = pymongo.Connection()
+        self.database = connection['proxy-finder']
+        self.collection = self.database['proxies']
+
+    def shutdown(self):
+        '''
+        Завершение работы
+        '''
+
+    def save_proxies(self, proxies):
+        '''
+        Сохраняет найденные прокси в mongodb
+        '''
+
+        for proxy in proxies:
+            self.save_proxy(proxy)
+
+    def save_proxy(self, proxy):
+        '''
+        Сохраняет отдельную прокси
+        '''
+
+        item = dict(
+            address=proxy,
+        )
+
+        if self.collection.find(item).count():
+            return
+
+        additional = dict(
+            checked=False,
+            added=datetime.datetime.now()
+        )
+
+        item.update(additional)
+
+        self.collection.save(item)
 
 
 def main():
