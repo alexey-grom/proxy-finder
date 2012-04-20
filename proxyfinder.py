@@ -4,7 +4,6 @@
 import sys
 import re
 from optparse import OptionParser
-import logging
 
 from grab.spider import Spider, Task
 from grab.tools.rex import rex_text_list
@@ -69,7 +68,6 @@ class ProxyFinder(Spider):
         urls = grab.xpath_list('//h3[@class="r"]/a/@href')
 
         for url in urls:
-            print url
             # url может быть относительным, поэтому нужно скопировать grab
             g = grab.clone()
             grab.setup(url=url)
@@ -88,7 +86,7 @@ class ProxyFinder(Spider):
         # поиск всех ip[:port] на странице
 
         proxies = rex_text_list(grab.response.unicode_body(), PROXY_MASK)
-        print len(proxies)
+        self.save_proxies(proxies)
 
         # если требуется просматривать сайт - выборка всех ссылок
         # и инициация заданий
@@ -108,6 +106,9 @@ class ProxyFinder(Spider):
                 grab=g,
                 level=task.level - 1
             )
+
+    def save_proxies(self, proxies):
+        print len(proxies)
 
 
 def main():
@@ -144,13 +145,7 @@ def main():
 
     options, _ = parser.parse_args()
 
-    proxy_finder = ProxyFinder(
-        search_query=options.search_query,
-        search_count=int(options.search_count),
-        fetch_urls=options.fetch_urls,
-        fetch_level=int(options.fetch_level),
-        thread_number=int(options.thread_number),
-    )
+    proxy_finder = ProxyFinder(**vars(options))
     proxy_finder.run()
     proxy_finder.render_stats()
 
