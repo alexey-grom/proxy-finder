@@ -3,6 +3,7 @@
 
 import sys
 import re
+from optparse import OptionParser
 import logging
 
 from grab.spider import Spider, Task
