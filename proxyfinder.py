@@ -110,10 +110,49 @@ class ProxyFinder(Spider):
 
 
 def main():
-    #logging.basicConfig(level=logging.DEBUG)
-    proxy_finder = ProxyFinder()
+    parser = OptionParser(description=u'Поисковик прокси')
+
+    parser.add_option('-t',
+        action="store",
+        dest='threads_count',
+        default=10,
+        help=u'количество потоков')
+
+    parser.add_option('-q',
+        action="store",
+        dest='search_query',
+        default='free proxy',
+        help=u'поисковой запрос для гугла')
+
+    parser.add_option('-c',
+        action="store",
+        dest='search_count',
+        default=100,
+        help=u'размер выдачи гугла')
+
+    parser.add_option('-f',
+        action="store_true",
+        dest='fetch_urls',
+        help=u'сканировать сайты')
+
+    parser.add_option('-l',
+        action="store",
+        dest='fetch_level',
+        default=2,
+        help=u'глубина сканирования сайтов')
+
+    options, _ = parser.parse_args()
+
+    proxy_finder = ProxyFinder(
+        search_query=options.search_query,
+        search_count=options.search_count,
+        fetch_urls=options.fetch_urls,
+        fetch_level=options.fetch_level,
+        thread_number=options.threads_count,
+    )
     proxy_finder.run()
     proxy_finder.render_stats()
+
     sys.exit()
 
 
