@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+from urlparse import urlparse
 
 from grab.spider import Spider, Task
 from grab.tools.rex import rex_text_list
@@ -65,18 +66,19 @@ class ProxyFinder(Spider):
         Вызывается когда получен результат поискового запроса
         '''
 
-        # выборка всех ссылок
+        # нормализация и всех ссылок
+
+        grab.tree.make_links_absolute(grab.response.url)
 
         urls = grab.xpath_list('//h3[@class="r"]/a/@href')
 
         for url in urls:
-            # url может быть относительным, поэтому нужно скопировать grab
-            g = grab.clone()
-            grab.setup(url=url)
-            #
+            if not self.validate_url(url):
+                continue
+
             yield Task(
                 name='list',
-                grab=g,
+                url=url,
                 level=self.fetch_level - 1
             )
 
@@ -96,18 +98,29 @@ class ProxyFinder(Spider):
         if not self.fetch_urls or not task.level:
             return
 
+        # нормализация и всех ссылок на странице
+        grab.tree.make_links_absolute(grab.response.url)
+
         urls = grab.xpath_list('//a/@href')
 
         for url in urls:
-            #
-            g = grab.clone()
-            g.setup(url=url)
-            #
+            if not self.validate_url(url):
+                continue
+
             yield Task(
                 name='list',
-                grab=g,
+                url=url,
                 level=task.level - 1
             )
+
+    def validate_url(self, url):
+        '''
+        Проверка валидности url
+        '''
+
+        url = urlparse(url)
+        if url.scheme in ['http', 'https']:
+            return True
 
     def save_proxies(self, proxies):
         '''
