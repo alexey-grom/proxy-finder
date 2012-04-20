@@ -118,6 +118,7 @@ def main():
         action="store",
         dest='thread_number',
         default=10,
+        type='int',
         help=u'количество потоков')
 
     parser.add_option('-q',
@@ -130,6 +131,7 @@ def main():
         action="store",
         dest='search_count',
         default=100,
+        type='int',
         help=u'размер выдачи гугла')
 
     parser.add_option('-f',
@@ -141,6 +143,7 @@ def main():
         action="store",
         dest='fetch_level',
         default=2,
+        type='int',
         help=u'глубина сканирования сайтов')
 
     options, _ = parser.parse_args()
