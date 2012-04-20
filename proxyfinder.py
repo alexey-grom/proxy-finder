@@ -30,6 +30,7 @@ class ProxyFinder(Spider):
         '''
 
         super(ProxyFinder, self).__init__(*args, **kwargs)
+
         self.search_query = search_query
         self.search_count = search_count
         self.fetch_urls = fetch_urls
@@ -67,9 +68,16 @@ class ProxyFinder(Spider):
         urls = grab.xpath_list('//h3[@class="r"]/a/@href')
 
         for url in urls:
-            yield Task(name='list',
-                       url=url,
-                       level=self.fetch_level - 1)
+            print url
+            # url может быть относительным, поэтому нужно скопировать grab
+            g = grab.clone()
+            grab.setup(url=url)
+            #
+            yield Task(
+                name='list',
+                grab=g,
+                level=self.fetch_level - 1
+            )
 
     def task_list(self, grab, task):
         '''
@@ -90,9 +98,15 @@ class ProxyFinder(Spider):
         urls = grab.xpath_list('//a/@href')
 
         for url in urls:
-            yield Task(name='list',
-                url=url,
-                level=task.level - 1)
+            #
+            g = grab.clone()
+            g.setup(url=url)
+            #
+            yield Task(
+                name='list',
+                grab=g,
+                level=task.level - 1
+            )
 
 
 def main():
