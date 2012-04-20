@@ -115,7 +115,7 @@ def main():
 
     parser.add_option('-t',
         action="store",
-        dest='threads_count',
+        dest='thread_number',
         default=10,
         help=u'количество потоков')
 
@@ -146,10 +146,10 @@ def main():
 
     proxy_finder = ProxyFinder(
         search_query=options.search_query,
-        search_count=options.search_count,
+        search_count=int(options.search_count),
         fetch_urls=options.fetch_urls,
-        fetch_level=options.fetch_level,
-        thread_number=options.threads_count,
+        fetch_level=int(options.fetch_level),
+        thread_number=int(options.thread_number),
     )
     proxy_finder.run()
     proxy_finder.render_stats()
