@@ -131,7 +131,6 @@ class ProxyFinder(Spider):
         '''
 
         url = urlparse(url)
-        #if url.scheme in ['http', 'https']:
         if url.scheme in ['http']:
             return True
 

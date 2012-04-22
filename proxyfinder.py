@@ -57,10 +57,12 @@ class Finder(ProxyFinder, ProxyChecker):
         )
 
         additional = dict(
-            added=datetime.datetime.now()
+            check_time=datetime.datetime.now()
         )
 
         options.update(additional)
+
+        print item, options
 
         self.proxies.update(item, options)
 
@@ -73,17 +75,16 @@ class Finder(ProxyFinder, ProxyChecker):
             address=proxy,
         )
 
-        if self.proxies.find(item).count():
-            return
+        if not self.proxies.find(item).count():
+            additional = dict(
+                checked=False,
+                added=datetime.datetime.now(),
+                from_url=from_url
+            )
 
-        additional = dict(
-            checked=False,
-            added=datetime.datetime.now()
-        )
+            item.update(additional)
 
-        item.update(additional)
-
-        self.proxies.save(item)
+            self.proxies.save(item)
 
         self.check_proxy(proxy)
 

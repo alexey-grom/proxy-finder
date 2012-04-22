@@ -111,6 +111,8 @@ class ProxyChecker(Spider):
 
         logger.debug(u'checked get')
 
+        print 'checked'
+
         if grab.response.code != 200:
             return
 
@@ -135,6 +137,8 @@ class ProxyChecker(Spider):
         '''
 
         logger.debug(u'checked post')
+
+        print 'checked'
 
         if grab.response.code != 200:
             return
