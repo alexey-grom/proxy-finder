@@ -8,8 +8,8 @@ import logging
 
 import pymongo
 
-from finder import ProxyFinder
-from checker import ProxyChecker
+from spiders.finder import ProxyFinder
+from spiders.checker import ProxyChecker
 
 
 class Finder(ProxyFinder, ProxyChecker):
@@ -27,7 +27,8 @@ class Finder(ProxyFinder, ProxyChecker):
 
         connection = pymongo.Connection()
         self.database = connection['proxy-finder']
-        self.collection = self.database['proxies']
+        self.proxies = self.database['proxies']
+        self.urls = self.database['urls']
 
     def shutdown(self):
         '''
@@ -44,8 +45,24 @@ class Finder(ProxyFinder, ProxyChecker):
         super(Finder, self).finded_proxies(proxies, from_url)
 
         for proxy in proxies:
-            #self.save_proxy(proxy)
-            self.check_proxy(proxy)
+            self.save_proxy(proxy)
+
+    def checked_proxy(self, proxy, options):
+        '''
+        Вызывается когда прокси успешно проверена
+        '''
+
+        item = dict(
+            address=proxy,
+        )
+
+        additional = dict(
+            added=datetime.datetime.now()
+        )
+
+        options.update(additional)
+
+        self.proxies.update(item, options)
 
     def save_proxy(self, proxy, from_url=None):
         '''
@@ -56,7 +73,7 @@ class Finder(ProxyFinder, ProxyChecker):
             address=proxy,
         )
 
-        if self.collection.find(item).count():
+        if self.proxies.find(item).count():
             return
 
         additional = dict(
@@ -66,7 +83,9 @@ class Finder(ProxyFinder, ProxyChecker):
 
         item.update(additional)
 
-        self.collection.save(item)
+        self.proxies.save(item)
+
+        self.check_proxy(proxy)
 
 
 def main():
@@ -116,7 +135,7 @@ def main():
 
     options, _ = parser.parse_args()
 
-    logging.basicConfig(level=logging.DEBUG)
+    #logging.basicConfig(level=logging.DEBUG)
 
     proxy_finder = Finder(**vars(options))
     proxy_finder.run()

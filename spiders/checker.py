@@ -91,6 +91,7 @@ class ProxyChecker(Spider):
             grab = self.create_grab_instance()
 
             grab.setup(proxy=proxy,
+                       proxy_type='http',
                        connect_timeout=3,
                        **params)
 
@@ -107,6 +108,8 @@ class ProxyChecker(Spider):
         '''
         Проверен GET-запрос
         '''
+
+        logger.debug(u'checked get')
 
         if grab.response.code != 200:
             return
@@ -131,6 +134,8 @@ class ProxyChecker(Spider):
         Проверен POST-запрос
         '''
 
+        logger.debug(u'checked post')
+
         if grab.response.code != 200:
             return
 
@@ -138,6 +143,7 @@ class ProxyChecker(Spider):
             checked=True,
             post=True,
         )
+
         self.checked_proxy(task.proxy, options)
 
     def checked_proxy(self, proxy, options):
