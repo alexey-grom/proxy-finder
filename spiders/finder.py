@@ -105,12 +105,12 @@ class ProxyFinder(Spider):
             self.finded_proxies(proxies, grab.response.url)
 
         # если требуется просматривать сайт - выборка всех ссылок
-        # и инициация заданий
+        # переход по ним
 
         if not self.fetch_urls or not task.level:
             return
 
-        # нормализация и всех ссылок на странице
+        # нормализация всех ссылок на странице и переход по ним
         grab.tree.make_links_absolute(grab.response.url)
 
         urls = grab.xpath_list('//a/@href')
@@ -127,7 +127,9 @@ class ProxyFinder(Spider):
 
     def validate_url(self, url):
         '''
-        Проверка валидности url
+        Проверка валидности url для поиска прокси
+
+        Имеет смысл загружать только http, https - медленнее
         '''
 
         url = urlparse(url)
@@ -139,7 +141,7 @@ class ProxyFinder(Spider):
         Вызывается когда нужно сохранить найденные прокси
 
         :param proxies: Список найденных прокси
-        :param from_url: url по котрому нашли прокси
+        :param from_url: url по которому нашли прокси
         '''
 
         logger.debug(u'Найдено %d прокси на %s' % (len(proxies), from_url))

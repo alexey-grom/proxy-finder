@@ -90,9 +90,12 @@ class ProxyChecker(Spider):
         for name, params in requests.items():
             grab = self.create_grab_instance()
 
+            # TODO: задействовать self.check_try_count
+
             grab.setup(proxy=proxy,
                        proxy_type='http',
                        connect_timeout=self.check_timeout,
+                       timeout=self.check_timeout * 2,
                        **params)
 
             task = Task(
@@ -109,10 +112,6 @@ class ProxyChecker(Spider):
         Проверен GET-запрос
         '''
 
-        logger.debug(u'checked get')
-
-        print 'checked'
-
         if grab.response.code != 200:
             return
 
@@ -125,7 +124,7 @@ class ProxyChecker(Spider):
 
         options = dict(
             checked=True,
-            anonymous=ip_address == self.ip_address,
+            anonymous=ip_address != self.ip_address,
             get=True,
         )
 
@@ -135,10 +134,6 @@ class ProxyChecker(Spider):
         '''
         Проверен POST-запрос
         '''
-
-        logger.debug(u'checked post')
-
-        print 'checked'
 
         if grab.response.code != 200:
             return
@@ -152,9 +147,9 @@ class ProxyChecker(Spider):
 
     def checked_proxy(self, proxy, options):
         '''
-        Вызывается когда нужно прокси успешно проверена
+        Вызывается когда прокси успешно проверена
 
-        :param proxies: Список найденных прокси
+        :param proxy: Проверенная прокси
         :param options: Параметры прокси
         '''
 

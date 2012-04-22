@@ -12,6 +12,9 @@ from spiders.finder import ProxyFinder
 from spiders.checker import ProxyChecker
 
 
+logger = logging.getLogger('proxyfinder')
+
+
 class Finder(ProxyFinder, ProxyChecker):
     '''
     Наследник поисковика с перегруженным методом
@@ -45,7 +48,7 @@ class Finder(ProxyFinder, ProxyChecker):
         super(Finder, self).finded_proxies(proxies, from_url)
 
         for proxy in proxies:
-            self.save_proxy(proxy)
+            self.save_proxy(proxy, from_url)
 
     def checked_proxy(self, proxy, options):
         '''
@@ -64,14 +67,20 @@ class Finder(ProxyFinder, ProxyChecker):
 
         self.proxies.update(item, {'$set': options})
 
+        logger.debug(u'Проверена прокси %s' % proxy)
+
     def save_proxy(self, proxy, from_url=None):
         '''
-        Сохраняет отдельную прокси
+        Сохраняет отдельную прокси и запускает её проверку
         '''
+
+        # формируем словарь, по которому будем искать прокси в БД
 
         item = dict(
             address=proxy,
         )
+
+        # добавляем прокси если её нет в БД
 
         if not self.proxies.find(item).count():
             additional = dict(
@@ -84,7 +93,17 @@ class Finder(ProxyFinder, ProxyChecker):
 
             self.proxies.save(item)
 
-        self.check_proxy(proxy)
+        # ищем прокси и если она проверялась слишком давно или не проверялась
+        # вообще - запускаем проверку
+
+        item = self.proxies.find_one(item)
+
+        now = datetime.datetime.now()
+        check_elapsed = now - item.get('check_time', now)
+        check_elapsed = check_elapsed.total_seconds()
+
+        if not item.get('checked', False) or check_elapsed > 60*60:
+            self.check_proxy(proxy)
 
 
 def main():
