@@ -92,7 +92,7 @@ class ProxyChecker(Spider):
 
             grab.setup(proxy=proxy,
                        proxy_type='http',
-                       connect_timeout=3,
+                       connect_timeout=self.check_timeout,
                        **params)
 
             task = Task(

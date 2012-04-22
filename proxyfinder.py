@@ -62,9 +62,7 @@ class Finder(ProxyFinder, ProxyChecker):
 
         options.update(additional)
 
-        print item, options
-
-        self.proxies.update(item, options)
+        self.proxies.update(item, {'$set': options})
 
     def save_proxy(self, proxy, from_url=None):
         '''
