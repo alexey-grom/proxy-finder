@@ -4,13 +4,15 @@
 import sys
 import datetime
 from optparse import OptionParser
+import logging
 
 import pymongo
 
-from spider import ProxyFinder
+from finder import ProxyFinder
+from checker import ProxyChecker
 
 
-class Finder(ProxyFinder):
+class Finder(ProxyFinder, ProxyChecker):
     '''
     Наследник поисковика с перегруженным методом
     сохранения найденных прокси
@@ -21,6 +23,8 @@ class Finder(ProxyFinder):
         Подготовка к работе
         '''
 
+        super(Finder, self).prepare()
+
         connection = pymongo.Connection()
         self.database = connection['proxy-finder']
         self.collection = self.database['proxies']
@@ -30,15 +34,20 @@ class Finder(ProxyFinder):
         Завершение работы
         '''
 
-    def save_proxies(self, proxies):
+        super(Finder, self).shutdown()
+
+    def finded_proxies(self, proxies, from_url=None):
         '''
         Сохраняет найденные прокси в mongodb
         '''
 
-        for proxy in proxies:
-            self.save_proxy(proxy)
+        super(Finder, self).finded_proxies(proxies, from_url)
 
-    def save_proxy(self, proxy):
+        for proxy in proxies:
+            #self.save_proxy(proxy)
+            self.check_proxy(proxy)
+
+    def save_proxy(self, proxy, from_url=None):
         '''
         Сохраняет отдельную прокси
         '''
@@ -76,7 +85,7 @@ def main():
         '-q',
         action="store",
         dest='search_query',
-        default='free proxy',
+        default='free http proxy list',
         help=u'поисковой запрос для гугла'
     )
 
@@ -106,6 +115,8 @@ def main():
     )
 
     options, _ = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG)
 
     proxy_finder = Finder(**vars(options))
     proxy_finder.run()

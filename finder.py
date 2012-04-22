@@ -2,10 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import re
+import logging
 from urlparse import urlparse
 
 from grab.spider import Spider, Task
 from grab.tools.rex import rex_text_list
+
+
+logger = logging.getLogger('proxyfinder.finder')
 
 
 PROXY_MASK = re.compile('(\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}([:]\d{1,5})?)')
@@ -47,6 +51,8 @@ class ProxyFinder(Spider):
         # если не перезаписывать некоторые параметры в post -
         # то параметр num (количество поисковых результатов) перестает работать
 
+        logger.debug(u'Отправка запроса гуглу')
+
         post = dict(
             q = self.search_query,
             num = self.search_count,
@@ -66,11 +72,15 @@ class ProxyFinder(Spider):
         Вызывается когда получен результат поискового запроса
         '''
 
+        logger.debug(u'Получен поисковой результат гугла')
+
         # нормализация и всех ссылок
 
         grab.tree.make_links_absolute(grab.response.url)
 
         urls = grab.xpath_list('//h3[@class="r"]/a/@href')
+
+        logger.debug(u'Количество результатов в выдаче гугла: %d' % len(urls))
 
         for url in urls:
             if not self.validate_url(url):
@@ -90,7 +100,9 @@ class ProxyFinder(Spider):
         # поиск всех ip[:port] на странице
 
         proxies = rex_text_list(grab.response.unicode_body(), PROXY_MASK)
-        self.save_proxies(proxies)
+
+        if proxies:
+            self.finded_proxies(proxies, grab.response.url)
 
         # если требуется просматривать сайт - выборка всех ссылок
         # и инициация заданий
@@ -119,12 +131,16 @@ class ProxyFinder(Spider):
         '''
 
         url = urlparse(url)
-        if url.scheme in ['http', 'https']:
+        #if url.scheme in ['http', 'https']:
+        if url.scheme in ['http']:
             return True
 
-    def save_proxies(self, proxies):
+    def finded_proxies(self, proxies, from_url=None):
         '''
         Вызывается когда нужно сохранить найденные прокси
 
         :param proxies: Список найденных прокси
+        :param from_url: url по котрому нашли прокси
         '''
+
+        logger.debug(u'Найдено %d прокси на %s' % (len(proxies), from_url))
