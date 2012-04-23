@@ -18,7 +18,7 @@ class ProxyChecker(Spider):
     '''
 
     def __init__(self,
-                 check_try_count=0, check_timeout=5,
+                 check_try_count=1, check_timeout=5,
                  *args, **kwargs):
         '''
         :param check_try_count: Количество попыток подключения

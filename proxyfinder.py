@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Copyright: 2011, Alex Gromov
+# Author: Alex Gromov (alexey-grom@jabber.ru)
+# License: BSD
+
 import sys
 import datetime
 from optparse import OptionParser
@@ -144,7 +148,7 @@ class Finder(ProxyFinder, ProxyChecker):
 
         # если, так или иначе, проверка нужна - сохраняем её время
 
-        self.urls.updaete(item, {'$set': additional,})
+        self.urls.update(item, {'$set': additional,})
 
         return False
 
@@ -194,9 +198,17 @@ def main():
         help=u'глубина сканирования сайтов'
     )
 
+    parser.add_option(
+        '-d',
+        action="store_true",
+        dest='debugging',
+        help=u'выводить отладочную информацию'
+    )
+
     options, _ = parser.parse_args()
 
-    #logging.basicConfig(level=logging.DEBUG)
+    if options.debugging:
+        logging.basicConfig(level=logging.DEBUG)
 
     proxy_finder = Finder(**vars(options))
     proxy_finder.run()
