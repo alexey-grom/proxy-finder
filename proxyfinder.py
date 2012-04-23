@@ -103,9 +103,11 @@ class Finder(ProxyFinder, ProxyChecker):
 
         item = self.proxies.find_one(item)
 
+        # total_seconds только начиная с 2.7
+
         now = datetime.datetime.now()
         check_elapsed = now - item.get('check_time', now)
-        check_elapsed = check_elapsed.total_seconds()
+        check_elapsed = check_elapsed.days * 60 * 60 * 24 + check_elapsed.seconds
 
         if not item.get('checked', False) or check_elapsed > 60 * 60:
             self.check_proxy(proxy)
@@ -137,9 +139,12 @@ class Finder(ProxyFinder, ProxyChecker):
             self.urls.save(item)
         else:
             #если есть проверяем время последней проверки
+
+            # total_seconds только начиная с 2.7
+
             now = datetime.datetime.now()
             check_elapsed = now - url.get('added', now)
-            check_elapsed = check_elapsed.total_seconds()
+            check_elapsed = check_elapsed.days * 60 * 60 * 24 + check_elapsed.seconds
 
             if check_elapsed < 60 * 60:
                 # если с последней проверки прошло < часа -
