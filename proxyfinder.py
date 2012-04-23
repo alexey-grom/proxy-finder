@@ -17,8 +17,9 @@ logger = logging.getLogger('proxyfinder')
 
 class Finder(ProxyFinder, ProxyChecker):
     '''
-    Наследник поисковика с перегруженным методом
-    сохранения найденных прокси
+    Наследник поисковика и чекера с перегруженными методами
+    сохранения найденных прокси и проверки необходимости
+    просмотра страницы
     '''
 
     def prepare(self):
@@ -82,7 +83,7 @@ class Finder(ProxyFinder, ProxyChecker):
 
         # добавляем прокси если её нет в БД
 
-        if not self.proxies.find(item).count():
+        if not self.proxies.find_one(item):
             additional = dict(
                 checked=False,
                 added=datetime.datetime.now(),
@@ -102,8 +103,50 @@ class Finder(ProxyFinder, ProxyChecker):
         check_elapsed = now - item.get('check_time', now)
         check_elapsed = check_elapsed.total_seconds()
 
-        if not item.get('checked', False) or check_elapsed > 60*60:
+        if not item.get('checked', False) or check_elapsed > 60 * 60:
             self.check_proxy(proxy)
+
+    def looked_url(self, url):
+        '''
+        Проверка необходимости просмотра страницы
+        '''
+
+        # формируем словарь, по которому будем искать url в БД
+
+        item = dict(
+            url=url,
+        )
+
+        # дополнительное поле, которое означает время проверки url
+
+        additional = dict(
+            added=datetime.datetime.now(),
+        )
+
+        # поиск url в базе
+
+        url = self.urls.find_one(item)
+
+
+        if not url:
+            #если url нет в БД - сохраняем
+            self.urls.save(item)
+        else:
+            #если есть проверяем время последней проверки
+            now = datetime.datetime.now()
+            check_elapsed = now - url.get('added', now)
+            check_elapsed = check_elapsed.total_seconds()
+
+            if check_elapsed < 60 * 60:
+                # если с последней проверки прошло < часа -
+                # проверка не нужна
+                return True
+
+        # если, так или иначе, проверка нужна - сохраняем её время
+
+        self.urls.updaete(item, {'$set': additional,})
+
+        return False
 
 
 def main():

@@ -12,6 +12,7 @@ from grab.tools.rex import rex_text_list
 logger = logging.getLogger('proxyfinder.finder')
 
 
+# маска для поиска прокси вида ip[:port]
 PROXY_MASK = re.compile('(\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}([:]\d{1,5})?)')
 
 
@@ -48,10 +49,10 @@ class ProxyFinder(Spider):
         Инициирует поисковой запрос к гуглу
         '''
 
+        logger.debug(u'Отправка запроса гуглу')
+
         # если не перезаписывать некоторые параметры в post -
         # то параметр num (количество поисковых результатов) перестает работать
-
-        logger.debug(u'Отправка запроса гуглу')
 
         post = dict(
             q = self.search_query,
@@ -74,7 +75,7 @@ class ProxyFinder(Spider):
 
         logger.debug(u'Получен поисковой результат гугла')
 
-        # нормализация и всех ссылок
+        # нормализация и переход по всем ссылкам
 
         grab.tree.make_links_absolute(grab.response.url)
 
@@ -82,8 +83,10 @@ class ProxyFinder(Spider):
 
         logger.debug(u'Количество результатов в выдаче гугла: %d' % len(urls))
 
+        # переход по всем ссылкам если они валидны и еще не просмотрены
+
         for url in urls:
-            if not self.validate_url(url):
+            if not self.validate_url(url) or self.looked_url(url):
                 continue
 
             yield Task(
@@ -110,13 +113,15 @@ class ProxyFinder(Spider):
         if not self.fetch_urls or not task.level:
             return
 
-        # нормализация всех ссылок на странице и переход по ним
+        # нормализация всех ссылок на странице из извлечение их списка
         grab.tree.make_links_absolute(grab.response.url)
 
         urls = grab.xpath_list('//a/@href')
 
+        # переход по всем ссылкам если они валидны и еще не просмотрены
+
         for url in urls:
-            if not self.validate_url(url):
+            if not self.validate_url(url) or self.looked_url(url):
                 continue
 
             yield Task(
@@ -145,3 +150,10 @@ class ProxyFinder(Spider):
         '''
 
         logger.debug(u'Найдено %d прокси на %s' % (len(proxies), from_url))
+
+    def looked_url(self, url):
+        '''
+        Вызывается чтобы проверить требуется ли скан url
+        '''
+
+        return False

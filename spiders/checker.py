@@ -8,6 +8,7 @@ from grab.spider import Spider, Task
 
 logger = logging.getLogger('proxyfinder.checker')
 
+
 GREATEST_PRIORITY = 1
 
 
@@ -17,16 +18,19 @@ class ProxyChecker(Spider):
     '''
 
     def __init__(self,
-                 check_try_count=1, check_timeout=5,
+                 check_try_count=0, check_timeout=5,
                  *args, **kwargs):
         '''
-        :param check_try_count:
-        :param check_timeout:
+        :param check_try_count: Количество попыток подключения
+        :param check_timeout: Таймаут для попытки подключения
         '''
 
-        super(ProxyChecker, self).__init__(*args, **kwargs)
+        super(ProxyChecker, self).__init__(
+            network_try_limit=check_try_count,
+            task_try_limit=check_try_count,
+            *args, **kwargs
+        )
 
-        self.check_try_count = check_try_count
         self.check_timeout = check_timeout
 
     def prepare(self):
@@ -67,6 +71,7 @@ class ProxyChecker(Spider):
         ip_address = ip_address.strip()
 
         logger.debug(u'Внешний ip-адрес найден: %s' % ip_address)
+
         self.ip_address = ip_address
 
 
@@ -76,6 +81,8 @@ class ProxyChecker(Spider):
         '''
 
         logger.debug(u'Проверка прокси %s' % proxy)
+
+        # Запросы которые нужно проверить для прокси
 
         requests = dict(
             GET=dict(
@@ -87,10 +94,10 @@ class ProxyChecker(Spider):
             )
         )
 
+        # Инициация запросов для прокси
+
         for name, params in requests.items():
             grab = self.create_grab_instance()
-
-            # TODO: задействовать self.check_try_count
 
             grab.setup(proxy=proxy,
                        proxy_type='http',
