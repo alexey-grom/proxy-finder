@@ -201,14 +201,16 @@ def main():
     parser.add_option(
         '-d',
         action="store_true",
-        dest='debugging',
+        dest='logging',
         help=u'выводить отладочную информацию'
     )
 
     options, _ = parser.parse_args()
 
-    if options.debugging:
+    if options.logging:
         logging.basicConfig(level=logging.DEBUG)
+
+    del options.logging
 
     proxy_finder = Finder(**vars(options))
     proxy_finder.run()
