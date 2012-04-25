@@ -13,12 +13,10 @@ GREATEST_PRIORITY = 1
 
 
 class ProxyChecker(Spider):
-    '''
-    Чекер прокси
-    '''
+    '''Чекер прокси'''
 
     def __init__(self,
-                 check_try_count=1, check_timeout=5,
+                 check_try_count=2, check_timeout=5,
                  *args, **kwargs):
         '''
         :param check_try_count: Количество попыток подключения
@@ -34,9 +32,7 @@ class ProxyChecker(Spider):
         self.check_timeout = check_timeout
 
     def prepare(self):
-        '''
-        Подготовка к работе
-        '''
+        '''Подготовка к работе'''
 
         super(ProxyChecker, self).prepare()
 
@@ -58,9 +54,7 @@ class ProxyChecker(Spider):
         )
 
     def task_get_ip(self, grab, task):
-        '''
-        Получен внешний ip-адрес
-        '''
+        '''Получен внешний ip-адрес'''
 
         ip_address = grab.xpath('id("do")/text()')
 
@@ -76,9 +70,7 @@ class ProxyChecker(Spider):
 
 
     def check_proxy(self, proxy):
-        '''
-        Добавляет задачу для проверки прокси
-        '''
+        '''Добавляет задачу для проверки прокси'''
 
         logger.debug(u'Проверка прокси %s' % proxy)
 
@@ -102,7 +94,7 @@ class ProxyChecker(Spider):
             grab.setup(proxy=proxy,
                        proxy_type='http',
                        connect_timeout=self.check_timeout,
-                       timeout=self.check_timeout * 2,
+                       timeout=self.check_timeout * 3,
                        **params)
 
             task = Task(
@@ -115,9 +107,7 @@ class ProxyChecker(Spider):
             self.add_task(task)
 
     def task_check_get(self, grab, task):
-        '''
-        Проверен GET-запрос
-        '''
+        '''Проверен GET-запрос'''
 
         if grab.response.code != 200:
             return
@@ -138,9 +128,7 @@ class ProxyChecker(Spider):
         self.checked_proxy(task.proxy, options)
 
     def task_check_post(self, grab, task):
-        '''
-        Проверен POST-запрос
-        '''
+        '''Проверен POST-запрос'''
 
         if grab.response.code != 200:
             return

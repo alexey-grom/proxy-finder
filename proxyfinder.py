@@ -1,161 +1,96 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright: 2011, Alex Gromov
+# Copyright: 2012, Alex Gromov
 # Author: Alex Gromov (alexey-grom@jabber.ru)
 # License: BSD
 
-import sys
-import datetime
+from sys import exit
+from datetime import datatime
 from optparse import OptionParser
 import logging
 
-import pymongo
-
 from spiders.finder import ProxyFinder
 from spiders.checker import ProxyChecker
+
+from cacher import Cacher
 
 
 logger = logging.getLogger('proxyfinder')
 
 
-class Finder(ProxyFinder, ProxyChecker):
-    '''
-    Наследник поисковика и чекера с перегруженными методами
-    сохранения найденных прокси и проверки необходимости
-    просмотра страницы
-    '''
+class Finder(Cacher, ProxyFinder, ProxyChecker):
+    ''' Поисковик и чекер прокси '''
+
+    def __init__(self, *args, **kwargs):
+        super(Finder, self).__init__(*args, **kwargs)
+
+    def setup_queue(self, backend='mongo', database='proxy-finder', **kwargs):
+        super(Finder, self).setup_queue(backend, database, **kwargs)
 
     def prepare(self):
-        '''
-        Подготовка к работе
-        '''
+        '''Подготовка к работе'''
 
         super(Finder, self).prepare()
 
-        connection = pymongo.Connection()
-        self.database = connection['proxy-finder']
-        self.proxies = self.database['proxies']
-        self.urls = self.database['urls']
-
     def shutdown(self):
-        '''
-        Завершение работы
-        '''
+        '''Завершение работы'''
 
         super(Finder, self).shutdown()
 
-    def finded_proxies(self, proxies, from_url=None):
-        '''
-        Сохраняет найденные прокси в mongodb
-        '''
+    def finded_proxies(self, proxies):
+        '''Сохраняет найденные прокси в mongodb'''
 
-        super(Finder, self).finded_proxies(proxies, from_url)
+        super(Finder, self).finded_proxies(proxies)
 
         for proxy in proxies:
-            self.save_proxy(proxy, from_url)
+            self.save_proxy(proxy)
 
     def checked_proxy(self, proxy, options):
-        '''
-        Вызывается когда прокси успешно проверена
-        '''
+        '''Вызывается когда прокси успешно проверена'''
 
-        item = dict(
-            address=proxy,
-        )
+        super(Finder, self).checked_proxy(proxy, options)
 
-        additional = dict(
-            check_time=datetime.datetime.now()
-        )
+        self.mark_check_result(proxy, options)
 
-        options.update(additional)
+    def is_checked_proxy(self, proxy):
+        '''Нужно ли проверять прокси'''
 
-        self.proxies.update(item, {'$set': options})
+        if self.is_proxy_exists(proxy):
+            if not self.is_valid_proxy(proxy):
+                return True
+            if not self.is_proxy_expired(proxy):
+                return True
+        else:
+            self.save_proxy(proxy)
 
-        logger.debug(u'Проверена прокси %s' % proxy)
+    def save_proxy(self, proxy):
+        '''Сохраняет отдельную прокси и запускает её проверку'''
 
-    def save_proxy(self, proxy, from_url=None):
-        '''
-        Сохраняет отдельную прокси и запускает её проверку
-        '''
-
-        # формируем словарь, по которому будем искать прокси в БД
-
-        item = dict(
-            address=proxy,
-        )
-
-        # добавляем прокси если её нет в БД
-
-        if not self.proxies.find_one(item):
-            additional = dict(
-                checked=False,
-                added=datetime.datetime.now(),
-                from_url=from_url
-            )
-
-            item.update(additional)
-
-            self.proxies.save(item)
-
-        # ищем прокси и если она проверялась слишком давно или не проверялась
-        # вообще - запускаем проверку
-
-        item = self.proxies.find_one(item)
-
-        # total_seconds только начиная с 2.7
-
-        now = datetime.datetime.now()
-        check_elapsed = now - item.get('check_time', now)
-        check_elapsed = check_elapsed.days * 60 * 60 * 24 + check_elapsed.seconds
-
-        if not item.get('checked', False) or check_elapsed > 60 * 60:
+        if not self.is_checked_proxy(proxy):
+            self.mark_check_start(proxy)
             self.check_proxy(proxy)
 
     def looked_url(self, url):
-        '''
-        Проверка необходимости просмотра страницы
-        '''
+        '''Проверка необходимости просмотра страницы'''
 
-        # формируем словарь, по которому будем искать url в БД
+        if not self.is_url_exists(url):
+            self.save_url(url)
+            return
 
-        item = dict(
-            url=url,
-        )
+        if self.is_url_expired(url):
+            self.update_url(url)
+            return
 
-        # дополнительное поле, которое означает время проверки url
+        return True
 
-        additional = dict(
-            added=datetime.datetime.now(),
-        )
+def dump_proxies(get=True, post=True, anonymous=True):
+    '''Дампит в stdout прокси с указанными параметрами'''
 
-        # поиск url в базе
+    cacher = Cacher()
 
-        url = self.urls.find_one(item)
-
-
-        if not url:
-            #если url нет в БД - сохраняем
-            self.urls.save(item)
-        else:
-            #если есть проверяем время последней проверки
-
-            # total_seconds только начиная с 2.7
-
-            now = datetime.datetime.now()
-            check_elapsed = now - url.get('added', now)
-            check_elapsed = check_elapsed.days * 60 * 60 * 24 + check_elapsed.seconds
-
-            if check_elapsed < 60 * 60:
-                # если с последней проверки прошло < часа -
-                # проверка не нужна
-                return True
-
-        # если, так или иначе, проверка нужна - сохраняем её время
-
-        self.urls.update(item, {'$set': additional,})
-
-        return False
+    for proxy in cacher.get_proxy(get, post, anonymous):
+        print proxy
 
 
 def main():
@@ -165,7 +100,7 @@ def main():
         '-t',
         action="store",
         dest='thread_number',
-        default=10,
+        default=20,
         type='int',
         help=u'количество потоков'
     )
@@ -174,7 +109,7 @@ def main():
         '-q',
         action="store",
         dest='search_query',
-        default='free http proxy list',
+        default='http proxy list',
         help=u'поисковой запрос для гугла'
     )
 
@@ -182,7 +117,7 @@ def main():
         '-c',
         action="store",
         dest='search_count',
-        default=100,
+        default=10,
         type='int',
         help=u'размер выдачи гугла'
     )
@@ -191,6 +126,7 @@ def main():
         '-f',
         action="store_true",
         dest='fetch_urls',
+        default=True,
         help=u'сканировать сайты'
     )
 
@@ -207,10 +143,11 @@ def main():
         '-d',
         action="store_true",
         dest='logging',
+        #default=True,
         help=u'выводить отладочную информацию'
     )
 
-    options, _ = parser.parse_args()
+    options, args = parser.parse_args()
 
     if options.logging:
         logging.basicConfig(level=logging.DEBUG)
@@ -221,7 +158,7 @@ def main():
     proxy_finder.run()
     proxy_finder.render_stats()
 
-    sys.exit()
+    exit()
 
 
 if __name__ == '__main__':

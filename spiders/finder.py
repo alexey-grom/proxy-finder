@@ -10,6 +10,7 @@ from grab.tools.rex import rex_text_list
 
 
 logger = logging.getLogger('proxyfinder.finder')
+walk_log = logging.getLogger('proxyfinder.finder.walk')
 
 
 # маска для поиска прокси вида ip[:port]
@@ -45,9 +46,7 @@ class ProxyFinder(Spider):
         self.fetch_level = fetch_level
 
     def task_initial(self, grab, task):
-        '''
-        Инициирует поисковой запрос к гуглу
-        '''
+        '''Инициирует поисковой запрос к гуглу'''
 
         logger.debug(u'Отправка запроса гуглу')
 
@@ -69,9 +68,7 @@ class ProxyFinder(Spider):
                    grab=grab)
 
     def task_search(self, grab, task):
-        '''
-        Вызывается когда получен результат поискового запроса
-        '''
+        '''Вызывается когда получен результат поискового запроса'''
 
         logger.debug(u'Получен поисковой результат гугла')
 
@@ -85,27 +82,17 @@ class ProxyFinder(Spider):
 
         # переход по всем ссылкам если они валидны и еще не просмотрены
 
-        for url in urls:
-            if not self.validate_url(url) or self.looked_url(url):
-                continue
-
-            yield Task(
-                name='list',
-                url=url,
-                level=self.fetch_level - 1
-            )
+        self.fetch_urls(urls, level=self.fetch_level - 1)
 
     def task_list(self, grab, task):
-        '''
-        Вызывается когда получена очередная страница сайта
-        '''
+        '''Вызывается когда получена очередная страница сайта'''
 
         # поиск всех ip[:port] на странице
 
         proxies = rex_text_list(grab.response.unicode_body(), PROXY_MASK)
 
         if proxies:
-            self.finded_proxies(proxies, grab.response.url)
+            self.finded_proxies(proxies)
 
         # если требуется просматривать сайт - выборка всех ссылок
         # переход по ним
@@ -120,15 +107,7 @@ class ProxyFinder(Spider):
 
         # переход по всем ссылкам если они валидны и еще не просмотрены
 
-        for url in urls:
-            if not self.validate_url(url) or self.looked_url(url):
-                continue
-
-            yield Task(
-                name='list',
-                url=url,
-                level=task.level - 1
-            )
+        self.fetch_urls(urls, level=task.level - 1)
 
     def validate_url(self, url):
         '''
@@ -137,11 +116,26 @@ class ProxyFinder(Spider):
         Имеет смысл загружать только http, https - медленнее
         '''
 
-        url = urlparse(url)
-        if url.scheme in ['http']:
+        parsed_url = urlparse(url)
+        if parsed_url.scheme in ['http']:
             return True
 
-    def finded_proxies(self, proxies, from_url=None):
+    def fetch_urls(self, urls, level):
+        '''Генерация заданий для всех url из списка'''
+
+        for url in urls:
+            if not self.validate_url(url) or self.looked_url(url):
+                continue
+
+            walk_log.debug(u'Переход на %s' % (url))
+
+            yield Task(
+                name='list',
+                url=url,
+                level=task.level - 1
+            )
+
+    def finded_proxies(self, proxies):
         '''
         Вызывается когда нужно сохранить найденные прокси
 
@@ -149,11 +143,9 @@ class ProxyFinder(Spider):
         :param from_url: url по которому нашли прокси
         '''
 
-        logger.debug(u'Найдено %d прокси на %s' % (len(proxies), from_url))
+        logger.debug(u'Найдено %d прокси на %s' % (len(proxies)))
 
     def looked_url(self, url):
-        '''
-        Вызывается чтобы проверить требуется ли скан url
-        '''
+        '''Вызывается чтобы проверить требуется ли скан url'''
 
         return False
