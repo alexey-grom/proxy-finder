@@ -6,7 +6,6 @@
 # License: BSD
 
 from sys import exit
-from datetime import datatime
 from optparse import OptionParser
 import logging
 
@@ -25,7 +24,7 @@ class Finder(Cacher, ProxyFinder, ProxyChecker):
     def __init__(self, *args, **kwargs):
         super(Finder, self).__init__(*args, **kwargs)
 
-    def setup_queue(self, backend='mongo', database='proxy-finder', **kwargs):
+    def setup_queue(self, backend='mongo', database='proxy_finder', **kwargs):
         super(Finder, self).setup_queue(backend, database, **kwargs)
 
     def prepare(self):
@@ -84,6 +83,7 @@ class Finder(Cacher, ProxyFinder, ProxyChecker):
 
         return True
 
+
 def dump_proxies(get=True, post=True, anonymous=True):
     '''Дампит в stdout прокси с указанными параметрами'''
 
@@ -91,6 +91,11 @@ def dump_proxies(get=True, post=True, anonymous=True):
 
     for proxy in cacher.get_proxy(get, post, anonymous):
         print proxy
+
+
+def drop_all():
+    cacher = Cacher()
+    cacher.drop_all()
 
 
 def main():
@@ -143,20 +148,25 @@ def main():
         '-d',
         action="store_true",
         dest='logging',
-        #default=True,
+        default=True,
         help=u'выводить отладочную информацию'
     )
 
     options, args = parser.parse_args()
 
-    if options.logging:
-        logging.basicConfig(level=logging.DEBUG)
+    if 'drop' in args:
+        drop_all()
+    elif 'dump' in args:
+        dump_proxies()
+    else:
+        if options.logging:
+            logging.basicConfig(level=logging.DEBUG)
 
-    del options.logging
+        del options.logging
 
-    proxy_finder = Finder(**vars(options))
-    proxy_finder.run()
-    proxy_finder.render_stats()
+        proxy_finder = Finder(**vars(options))
+        proxy_finder.run()
+        proxy_finder.render_stats()
 
     exit()
 

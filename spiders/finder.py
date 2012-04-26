@@ -59,7 +59,7 @@ class ProxyFinder(Spider):
             as_qdr = 'all',
             sclient = '',
             output = '',
-            )
+        )
 
         grab.submit(make_request=False,
                     extra_post=post)
@@ -82,7 +82,7 @@ class ProxyFinder(Spider):
 
         # переход по всем ссылкам если они валидны и еще не просмотрены
 
-        self.fetch_urls(urls, level=self.fetch_level - 1)
+        self.fetch_all(urls, level=self.fetch_level - 1)
 
     def task_list(self, grab, task):
         '''Вызывается когда получена очередная страница сайта'''
@@ -107,7 +107,7 @@ class ProxyFinder(Spider):
 
         # переход по всем ссылкам если они валидны и еще не просмотрены
 
-        self.fetch_urls(urls, level=task.level - 1)
+        self.fetch_all(urls, level=task.level - 1)
 
     def validate_url(self, url):
         '''
@@ -120,7 +120,7 @@ class ProxyFinder(Spider):
         if parsed_url.scheme in ['http']:
             return True
 
-    def fetch_urls(self, urls, level):
+    def fetch_all(self, urls, level):
         '''Генерация заданий для всех url из списка'''
 
         for url in urls:
@@ -143,7 +143,7 @@ class ProxyFinder(Spider):
         :param from_url: url по которому нашли прокси
         '''
 
-        logger.debug(u'Найдено %d прокси на %s' % (len(proxies)))
+        logger.debug(u'Найдено %d прокси' % (len(proxies)))
 
     def looked_url(self, url):
         '''Вызывается чтобы проверить требуется ли скан url'''
