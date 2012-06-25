@@ -37,18 +37,20 @@ class Proxy(Model):
 
     @classmethod
     def iterator(cls, session, count=30):
-        table_size = session.query(Proxy).count()
+        query = session.query(Proxy).filter(or_(Proxy.check_time == None, Proxy.valid == True))
+        table_size = query.count()
 
         for offset in xrange(0, table_size, count):
-            for proxy in session.query(Proxy).filter(or_(Proxy.check_time == None, Proxy.valid == True)).offset(offset).limit(count).all():
+            for proxy in query.offset(offset).limit(count).all():
                 yield proxy
 
     @classmethod
     def valid_iterator(cls, session, count=30):
-        table_size = session.query(Proxy).count()
+        query = session.query(Proxy).filter_by(valid=True)
+        table_size = query.count()
 
         for offset in xrange(0, table_size, count):
-            for proxy in session.query(Proxy).filter_by(valid=True).offset(offset).limit(count).all():
+            for proxy in query.offset(offset).limit(count).all():
                 yield proxy
 
 
