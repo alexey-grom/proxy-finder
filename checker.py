@@ -58,7 +58,7 @@ class ProxyChecker(MultiFetcher):
                 is_good = self.local_ip != ip
 
         logger.info(
-            u'%-3s  %s' % (
+            u'%-3s %s' % (
                 'OK' if is_good else 'BAD',
                 task.request.proxy
             )

@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from fetcher.frontend.sqlalchemy_frontend import Model
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, or_
 
 
 class Proxy(Model):
@@ -40,7 +40,7 @@ class Proxy(Model):
         table_size = session.query(Proxy).count()
 
         for offset in xrange(0, table_size, count):
-            for proxy in session.query(Proxy).filter_by(check_time=None).offset(offset).limit(count).all():
+            for proxy in session.query(Proxy).filter(or_(Proxy.check_time == None, Proxy.valid == True)).offset(offset).limit(count).all():
                 yield proxy
 
 
