@@ -1,1 +1,5 @@
 Поисковик прокси через выдачу гугла
+
+
+finder.py ищет ip-адреса и складывает их в proxies.sqlite
+checker.py проверяет ip-адреса из proxies.sqlite

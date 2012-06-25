@@ -3,7 +3,7 @@
 from re import compile, findall
 from logging import basicConfig, DEBUG, getLogger
 
-from fetcher import MultiFetcher, Task
+from fetcher import MultiFetcher, Task, Request
 from fetcher.utils import url_fix
 from fetcher.frontend.sqlalchemy_frontend import create_session
 
@@ -17,9 +17,10 @@ _, session = create_session('sqlite:///proxies.sqlite')
 
 
 class ProxyFinder(MultiFetcher):
+    GOOGLE_SEARCH_QUERY = 'http proxy'
     GOOGLE_RESULTS_COUNT = 100
     DEEP = 3
-    COUNT_FOR_DEEP_SCAN = 10
+    COUNT_FOR_DEEP_SCAN = 30
 
     PROXY_MASK = compile('(\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}[:]\d{1,5})')
 
@@ -38,7 +39,7 @@ class ProxyFinder(MultiFetcher):
 
         logger.info(u'Отправка запроса.')
 
-        task.get_control('q').value = 'proxy list'
+        task.get_control('q').value = ProxyFinder.GOOGLE_SEARCH_QUERY
 
         task.submit(
             submit_name='btnG',
@@ -59,11 +60,16 @@ class ProxyFinder(MultiFetcher):
 
         logger.info(u'Обход поисковых результатов.')
 
+        Request.connection_timeout = 5
+        Request.overall_timeout = 10
+
         for url in task.html.xpath('//h3[@class="r"]/a/@href', all=True):
+            logger.info(u'Переход на %s' % url)
             yield task.clone(
                 handler='page',
                 url=str(url),
-                level=0
+                level=0,
+                priority=100
             )
 
     def task_page(self, task, error=None):
@@ -77,7 +83,10 @@ class ProxyFinder(MultiFetcher):
             for ip in findall(self.PROXY_MASK, task.response.content)
         )
 
-        if ips:
+        if not ips:
+            logger.info(u'Не найдены ip-адреса на %s!' % task.response.url)
+
+        else:
             logger.info(u'Найдено %d ip-адресов на %s.' % (len(ips), task.response.url))
 
             for ip in ips:
@@ -93,7 +102,8 @@ class ProxyFinder(MultiFetcher):
                         yield Task(
                             handler='page',
                             url=url,
-                            level=task.level + 1
+                            level=task.level + 1,
+                            priority=task.priority - 1
                         )
 
             session.commit()
@@ -102,7 +112,9 @@ class ProxyFinder(MultiFetcher):
 if __name__ == '__main__':
     basicConfig(level=DEBUG)
 
-    proxy_finder = ProxyFinder()
+    proxy_finder = ProxyFinder(
+        threads_count=30
+    )
     proxy_finder.start()
     proxy_finder.render_stat()
 

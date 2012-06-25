@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import datetime
+from datetime import datetime
 
 from fetcher.frontend.sqlalchemy_frontend import Model
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
@@ -12,19 +12,8 @@ class Proxy(Model):
     id = Column(Integer, primary_key=True)
 
     ip = Column(String(21), index=True, unique=True)
-
-    add_time = Column(DateTime)
     check_time = Column(DateTime)
-
     valid = Column(Boolean)
-
-    is_get = Column(Boolean)
-    is_post = Column(Boolean)
-    is_anonymous = Column(Boolean)
-
-    def __init__(self, *args, **kwargs):
-        self.add_time = datetime.datetime.now()
-        super(Proxy, self).__init__(*args, **kwargs)
 
     @classmethod
     def store_proxy(cls, session, ip):
@@ -32,13 +21,27 @@ class Proxy(Model):
             session.add(Proxy(ip=ip))
 
     @classmethod
+    def store_result(cls, session, ip, is_good=True):
+        item = session.query(Proxy).filter_by(ip=ip).first()
+        item.valid = is_good
+        item.check_time = datetime.now()
+        session.commit()
+
+    @classmethod
     def count(cls, session):
         return session.query(Proxy).count()
 
     @classmethod
+    def valid_count(cls, session):
+        return session.query(Proxy).filter_by(valid=True).count()
+
+    @classmethod
     def iterator(cls, session, count=30):
-        for proxy in session.query(Proxy).yield_per(count):
-            yield proxy
+        table_size = session.query(Proxy).count()
+
+        for offset in xrange(0, table_size, count):
+            for proxy in session.query(Proxy).filter_by(check_time=None).offset(offset).limit(count).all():
+                yield proxy
 
 
 class Url(Model):
