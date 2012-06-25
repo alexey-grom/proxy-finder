@@ -10,4 +10,4 @@ _, session = create_session('sqlite:///proxies.sqlite')
 
 if __name__ == '__main__':
     for proxy in Proxy.valid_iterator(session):
-        print proxy
+        print proxy.ip
