@@ -37,7 +37,7 @@ class Proxy(Model):
 
     @classmethod
     def iterator(cls, session, count=30):
-        query = session.query(Proxy).filter(or_(Proxy.check_time == None, Proxy.valid == True))
+        query = session.query(Proxy).filter_by(check_time=None)
         table_size = query.count()
 
         for offset in xrange(0, table_size, count):
