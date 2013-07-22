@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from logging import getLogger
+from urlparse import urlparse
 
 from sqlalchemy import create_engine
 from sqlalchemy import (Column,
@@ -8,7 +9,6 @@ from sqlalchemy import (Column,
                         text,
                         ForeignKey)
 from sqlalchemy.dialects.mysql import INTEGER
-from sqlalchemy.sql.expression import exists
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship, backref
@@ -48,6 +48,12 @@ def commit_session():
     session.commit()
 
 
+def split_url(url):
+    domain = urlparse(url).hostname
+    path = domain.join(url.split(domain)[1:])
+    return domain, path
+
+
 class Site(Base):
     __tablename__ = 'sites'
 
@@ -56,7 +62,9 @@ class Site(Base):
     #urls
 
     @staticmethod
-    def get_or_create(domain):
+    def get_or_create(url):
+        domain, path = split_url(url)
+
         result = session.query(Site).\
             filter_by(domain=domain).\
             first()
@@ -77,19 +85,24 @@ class Url(Base):
     check_date = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'), server_onupdate=text('CURRENT_TIMESTAMP'))
 
     @staticmethod
-    def get_or_create(domain, path, **kwargs):
-        url = session.query(Url).join(Site).\
+    def get_or_create(url, **kwargs):
+        domain, path = split_url(url)
+        print domain, path
+
+        result = session.query(Url).join(Site).\
             filter(Site.domain == domain, Url.path == path).\
             first()
-        if not url:
-            url = Url(path=path, **kwargs)
-            domain = Site.get_or_create(domain)
-            domain.urls.append(url)
+        if not result:
+            result = Url(path=path, **kwargs)
+            domain = Site.get_or_create(url)
+            domain.urls.append(result)
             session.merge(domain)
-        return url
+        return result
 
     @staticmethod
-    def is_exists(domain, path):
+    def is_exists(url):
+        domain, path = split_url(url)
+
         # TODO: refactor for exists
         result = session.query(Url).join(Site).\
             filter(Site.domain == domain, Url.path == path).\
@@ -148,33 +161,4 @@ class Port(Base):
 
 
 if __name__ == '__main__':
-    create_session('root', '654321', echo=False)
-
-    domain = 'google.com'
-    urls = [
-        '/sfsfsf',
-        '/sfsfsf',
-        '/sfsfsf2',
-        '/sfsfsf3',
-        '/sfsfsf4',
-    ]
-
-    ip_to_int = lambda ip: reduce(lambda accumulate, x: accumulate * 256 + x, map(int, ip.split('.')))
-    ips = [
-        ('1.1.1.1', [80, 22]),
-        ('1.1.2.1', [80, 22]),
-        ('1.1.2.1', [8080, 2222, 80]),
-        ('1.1.3.1', [80, 22]),
-    ]
-
-    print Site.get_or_create(domain)
-    for url in urls:
-        print Url.get_or_create(domain, url)
-
-    for ip, ports in ips:
-        ip = ip_to_int(ip)
-        print Host.get_or_create(ip)
-        for port in ports:
-            print Port.get_or_create(ip, port)
-
-    session.commit()
+    pass

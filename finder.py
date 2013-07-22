@@ -2,19 +2,18 @@
 
 from re import MULTILINE
 from logging import basicConfig, DEBUG, getLogger
-from urlparse import urlparse, urlsplit
-from pprint import pprint
+from urlparse import urlparse
 
 from grab import Grab
 from grab.spider import Spider, Task
 from grab.tools.google import build_search_url
-from furl import furl
 
 from model import (create_session, commit_session,
+                   split_url,
                    Site, Url, Host, Port)
 
 
-logger = getLogger('finder')
+#logger = getLogger('finder') # TODO: добавить логгирование
 
 
 ip_to_int = lambda ip: reduce(lambda accumulate, x: accumulate * 256 + x, map(int, ip.split('.')))
@@ -23,7 +22,7 @@ ip_to_int = lambda ip: reduce(lambda accumulate, x: accumulate * 256 + x, map(in
 class ProxyFinder(Spider):
     google_search_query = 'free http proxy list'
     google_results_count = 10
-    DEEP = 3
+    scan_deep = 3
     count_for_deep_scan = 10
 
     ignore_ips = [
@@ -72,7 +71,11 @@ class ProxyFinder(Spider):
         return False
 
     def task_page(self, grab, task):
-        url = furl(grab.response.url)
+        if not hasattr(task, 'level'):
+            task.level = 0
+
+        domain, _ = split_url(grab.response.url)
+        #url = urlparse(grab.response.url)
 
         # поиск ip-адресов
         ips = []
@@ -99,11 +102,11 @@ class ProxyFinder(Spider):
                 Host.get_or_create(ip[0])
 
         # статистика по сайтам
-        Url.get_or_create(url.hostname, url.path, found_count=len(ips))
+        Url.get_or_create(grab.response.url, found_count=len(ips))
         commit_session()
 
-        # обход ссылок сайта в глубь, если найдены ip-адреса
-        if len(ips) < self.count_for_deep_scan:
+        # поиск ссылок сайта в глубь, если найдены ip-адреса и если глубина не максимальная
+        if (len(ips) < self.count_for_deep_scan) and (task.level < self.scan_deep):
             return
 
         grab.tree.make_links_absolute(grab.response.url)
@@ -112,25 +115,21 @@ class ProxyFinder(Spider):
             grab.tree.xpath('//a/@href')
         )
         links = filter(
-            lambda link: (link.hostname == url.hostname) and not Url.is_exists(link.hostname, link.path),
+            lambda link: (link.hostname == domain) and not Url.is_exists(link.geturl()),
             links
         )
         links = set(map(
-            lambda item: item.path,
+            lambda item: item.geturl(),
             links
         ))
         if not links:
             return
 
-        #pprint(links)
-
+        # создание задач на обход ссылок
         for link in links:
-            #is_exists = Url.is_exists(url.hostname, link)
-            #if is_exists:
-            #    continue
             yield task.clone(
-                url=urlsplit(url.geturl(), link).geturl(),
-                level=task.level + 1 if hasattr(task, 'level') else 1,
+                url=link,
+                level=task.level + 1,
             )
 
 
