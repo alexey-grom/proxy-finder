@@ -1,4 +1,4 @@
-# coding: utf
+# encoding: utf-8
 
 from re import MULTILINE, findall
 from urlparse import urlparse

@@ -1,4 +1,4 @@
-# coding: utf
+# encoding: utf-8
 
 from gevent.monkey import patch_all; patch_all()
 

@@ -8,8 +8,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+
+from django.utils.translation import ugettext_lazy as _
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -34,7 +37,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -43,9 +45,13 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.flatpages',
 
+    'grappelli',
+    'django.contrib.admin',
+
     'south',
     'debug_toolbar',
     'rest_framework',
+    'rosetta',
 
     'layout',
     'proxyfinder',
@@ -59,6 +65,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
@@ -83,14 +91,36 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
 LANGUAGE_CODE = 'ru-ru'
-
 TIME_ZONE = 'Asia/Novosibirsk'
 
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
+
+LOCALE_PATHS = (
+    #os.path.join(BASE_DIR, 'locale'),
+    os.path.join(BASE_DIR, 'proxyfinder', 'locale'),
+)
+
+LANGUAGES = (
+    ('en', _('English')),
+    ('ru', _('Russian')),
+)
+
+ROSETTA_WSGI_AUTO_RELOAD = True
+ROSETTA_MESSAGES_PER_PAGE = 100
+
+#
+TEMPLATE_CONTEXT_PROCESSORS = [
+    'django.contrib.auth.context_processors.auth',
+    'django.core.context_processors.debug',
+    'django.core.context_processors.i18n',
+    'django.core.context_processors.media',
+    'django.core.context_processors.static',
+    'django.core.context_processors.tz',
+    'django.contrib.messages.context_processors.messages',
+    'django.core.context_processors.i18n',
+]
 
 
 # Static files (CSS, JavaScript, Images)

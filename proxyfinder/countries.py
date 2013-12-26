@@ -1,4 +1,4 @@
-# coding: utf
+# encoding: utf-8
 
 
 country_codes = {

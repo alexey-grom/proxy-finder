@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count, Sum, Q
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 from countries import country_codes
 from models import Site, Url, Proxy
@@ -31,39 +31,6 @@ class CountriesListFilter(admin.SimpleListFilter):
         if self.value():
             queryset = queryset.filter(country_code__exact=self.value())
         return queryset
-
-
-# class QualityListFilter(admin.SimpleListFilter):
-#     title = _('Quality')
-#     parameter_name = 'quality'
-#
-#     TYPES = [
-#         'not working',
-#         'bad',
-#         'normal',
-#         'best',
-#     ]
-#
-#     def lookups(self, request, model_admin):
-#         return [
-#             (value, _(value).capitalize())
-#             for index, value in enumerate(self.TYPES)
-#         ]
-#
-#     def queryset(self, request, queryset):
-#         if self.value():
-#             queryset = queryset.filter(~Q(checked=None))
-#
-#         if self.value() == 'not working':
-#             queryset = queryset.filter(~Q(is_get=True) & ~Q(is_post=True) & ~Q(is_anonymously=True))
-#         elif self.value() == 'bad':
-#             queryset = queryset.filter(Q(is_get=True) & ~Q(is_post=True) & ~Q(is_anonymously=True))
-#         elif self.value() == 'normal':
-#             queryset = queryset.filter(Q(is_get=True) & Q(is_post=True) & ~Q(is_anonymously=True))
-#         elif self.value() == 'best':
-#             queryset = queryset.filter(Q(is_get=True) & Q(is_post=True) & Q(is_anonymously=True))
-#
-#         return queryset
 
 
 class ProxyAdmin(admin.ModelAdmin):
