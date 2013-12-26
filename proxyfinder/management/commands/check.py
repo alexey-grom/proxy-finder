@@ -12,15 +12,14 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.transaction import commit_on_success
 from django.db.models import Q
 from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
 from requests import get, post
-from grab import Grab
-# import human_curl as hurl
-# from requesocks import get, post
 from gevent import spawn, joinall
 from gevent.socket import socket
 from pygeoip import GeoIP, MEMORY_CACHE
 
 from ...models import Proxy, Site, Url
+from settings import get_settings
 
 
 gi4 = GeoIP(join(dirname(__file__), 'GeoIP.dat'), MEMORY_CACHE)
@@ -51,20 +50,19 @@ def check_opened(host, port):
 
 
 class Checkers:
-    u""""""
+    u"""Проверялка проксей"""
 
     def __init__(self, proxy_type):
         self.proxy_type = proxy_type
 
     def _make_proxy(self, host, port):
-        u""""""
         address = self.proxy_type + '://' + host + ':' + str(port)
         return {
             'http': address,
         }
 
     def check_anonymouse(self, host, port):
-        u""""""
+        u"""Проверка на анонимность"""
         URL = 'http://httpbin.org/ip'
         try:
             response = get(URL,
@@ -77,7 +75,7 @@ class Checkers:
         return False
 
     def check_get_request(self, host, port):
-        u""""""
+        u"""Проверка поддержки GET-запроса"""
         URL = 'http://httpbin.org/ip'
         try:
             response = get(URL,
@@ -89,7 +87,7 @@ class Checkers:
         return False
 
     def check_post_request(self, host, port):
-        u""""""
+        u"""Проверка поддержки POST-запросов"""
         URL = 'http://httpbin.org/post'
         data = {
             'field1': 'value1',
@@ -107,11 +105,11 @@ class Checkers:
 
 
 class Command(BaseCommand):
-    help = 'Search proxies'
+    help = _('Search proxies')
 
-    PORTS = [80, 8080, 8081, 8181, 3128, 808, 8000, ]
-    ITERATE_SIZE = 10
-    CONNECTION_TIMEOUT = 5
+    def __init__(self, *args, **kwargs):
+        super(Command, self).__init__(*args, **kwargs)
+        self.settings = get_settings()
 
     def remove_addresses(self, addresses):
         pass
@@ -134,7 +132,7 @@ class Command(BaseCommand):
             spawn(func, *(host, port, ))
             for host, port in addresses
         ]
-        joinall(jobs, timeout=self.CONNECTION_TIMEOUT)
+        joinall(jobs, timeout=self.settings.CHECK['NETWORK_TIMEOUT'])
         return self.split_valid(addresses, jobs)
 
     @commit_on_success
@@ -150,15 +148,19 @@ class Command(BaseCommand):
                 addresses.append((proxy.address(), proxy.port, ))
             addresses.extend([
                 (proxy.address(), port, )
-                for port in self.PORTS
+                for port in self.settings.CHECK['PORTS']
             ])
 
         # IS UP
         print 'checking up'
-        is_up, down_hosts = self.check_working(check_opened, addresses)
+        is_up, down_hosts = self.check_working(check_opened,
+                                               addresses)
         #
         for host, port in down_hosts:
-            Proxy.objects.filter(ip=Proxy.ip_to_int(host), port=port).delete()
+            Proxy.objects.\
+                filter(ip=Proxy.ip_to_int(host),
+                       port=port).\
+                delete()
         #
         for address in is_up:
             results[address] = {
@@ -234,7 +236,7 @@ class Command(BaseCommand):
             queryset = Proxy.objects.filter(Q(checked=None) |
                                             Q(checked__lte=now() - timedelta(days=1)))
             for proxies in self.yield_per(queryset,
-                                          self.ITERATE_SIZE):
+                                          self.settings.CHECK['ITERATE_SIZE']):
                 self.check_addresses(proxies)
         except KeyboardInterrupt:
             self.stdout.write('^Interrupt')

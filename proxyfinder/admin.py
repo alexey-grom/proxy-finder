@@ -71,7 +71,6 @@ class ProxyAdmin(admin.ModelAdmin):
     ]
 
     list_filter = [
-        # QualityListFilter,
         'is_get',
         'is_post',
         'is_anonymously',
@@ -86,6 +85,7 @@ class ProxyAdmin(admin.ModelAdmin):
         if obj.port:
             port = obj.port
         return obj.address(port)
+    display_ip.short_description = _('IP:port')
 
 
 class UrlsInline(admin.StackedInline):
@@ -129,9 +129,11 @@ class SiteAdmin(admin.ModelAdmin):
 
     def pages_count(self, obj):
         return obj.pages_count
+    pages_count.short_description = _('Scanned pages')
 
     def proxies_count(self, obj):
         return obj.proxies_count
+    proxies_count.short_description = _('Finded count')
 
 
 admin.site.register(Site, SiteAdmin)

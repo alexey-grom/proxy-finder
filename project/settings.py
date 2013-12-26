@@ -145,3 +145,31 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+
+#PROXY_FINDER = {
+#    'SEARCH_QUERIES': [
+#        'free proxy list',
+#        'http proxies',
+#    ]
+#}
+
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'grab': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    }
+}

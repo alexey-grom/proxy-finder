@@ -1,6 +1,10 @@
 # encoding: utf-8
 
+from urlparse import urlparse
+from datetime import timedelta
+
 from django.db import models
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 from countries import country_codes
@@ -110,21 +114,35 @@ class Site(models.Model):
 class Url(models.Model):
     site = models.ForeignKey('Site',
                              verbose_name=_('Site'))
-    path = models.CharField(max_length=1024 * 10,
+    path = models.CharField(max_length=1024 * 4,
                             verbose_name=_('Path'))
 
     checked = models.DateTimeField(auto_now_add=True,
                                    auto_now=True,
                                    verbose_name=_('Last check time'))
-    count = models.SmallIntegerField(verbose_name=_('Finded count'))
+    count = models.SmallIntegerField(verbose_name=_('Finded count'),
+                                     blank=True,
+                                     null=True,
+                                     default=None)
 
     @staticmethod
-    def is_exists(site, path):
-        return Url.objects.filter(site__domain=site, path=path).exists()
+    def split_url(url):
+        parse = urlparse(url)
+        if not parse.scheme.startswith('http'):
+            return None, None
+        domain = parse.hostname
+        path = domain.join(url.split(domain)[1:])
+        return domain, path
+
+    @staticmethod
+    def is_exists(url):
+        domain, path = Url.split_url(url)
+        return Url.objects.\
+            filter(site__domain=domain,
+                   path=path,
+                   checked__lt=now() - timedelta(hours=1)).\
+            exists()
 
     class Meta:
-        # unique_together = [
-        #     ['site', 'path', ],
-        # ]
         verbose_name = _('Url')
         verbose_name_plural = _('Urls')

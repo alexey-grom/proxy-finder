@@ -1,52 +1,38 @@
 # encoding: utf-8
 
+from logging import basicConfig, DEBUG
 from re import MULTILINE, findall
-from urlparse import urlparse
 
 from django.core.management.base import BaseCommand, CommandError
-from django.db.transaction import commit_on_success
+from django.utils.translation import ugettext_lazy as _
 from grab import Grab
 from grab.spider import Spider, Task
 from grab.tools.google import build_search_url
 
 from ...models import Proxy, Site, Url
-
-
-def split_url(url):
-    domain = urlparse(url).hostname
-    path = domain.join(url.split(domain)[1:])
-    return domain, path
+from settings import get_settings
 
 
 class ProxyFinder(Spider):
-    google_search_queries = [
-        'free proxy list',
-    ]
-    google_results_count = 50
-    scan_deep = 3
-    count_for_deep_scan = 10
-
-    ignore_ips = [
-        ['10.0.0.0', '10.255.255.255'],
-        ['172.16.0.0', '172.31.255.255'],
-        ['192.168.0.0 ', '192.168.255.255'],
-    ]
-
     def __init__(self, *args, **kwargs):
+        self.settings = get_settings()
+
+        self.ignore_ips = self.settings.SEARCH['IGNORE_IPS']
         for index, ips_range in enumerate(self.ignore_ips):
             self.ignore_ips[index] = map(Proxy.ip_to_int, ips_range)
 
         super(ProxyFinder, self).__init__(*args, **kwargs)
-        self.setup_cache('mongo', database='grab-cache')
-        self.setup_queue()
+
+        #self.setup_cache('mongo', database='grab-cache')
+        #self.setup_queue()
 
     def task_generator(self):
-        for query in self.google_search_queries:
+        for query in self.settings.SEARCH['GOOGLE_QUERIES']:
             grab = Grab()
             grab.setup(
                 url=build_search_url(
                     query,
-                    per_page=self.google_results_count,
+                    per_page=self.settings.SEARCH['GOOGLE_RESULTS_COUNT'],
                 ),
                 user_agent='Mozilla/4.0 (compatible; MSIE 6.01; Windows NT 6.0)',
             )
@@ -70,89 +56,112 @@ class ProxyFinder(Spider):
                 return True
         return False
 
-    @commit_on_success
+    def get_unique_ips(self, grab):
+        ips = findall('(\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}([:]\d{1,5})?)',
+                      grab.response.unicode_body(),
+                      flags=MULTILINE)
+        ips = set(map(
+            lambda address: tuple(address[0].split(':')),
+            ips
+        ))
+        ips = filter(
+            lambda address: self.is_ignored_ip(address[0]),
+            ips
+        )
+
+        def prepare_ip(ip):
+            ip = list(ip[:2]) + [0, ]
+            ip, port = ip[:2]
+            ip = Proxy.ip_to_int(ip)
+            port = int(port)
+            kwargs = dict(ip=ip, port=port)
+            if Proxy.objects.filter(**kwargs).exists():
+                return None
+            return Proxy(**kwargs)
+
+        ips = map(prepare_ip, ips)
+        ips = filter(lambda ip: ip is not None, ips)
+
+        return ips
+
+    def get_unviewed_url(self, grab):
+        domain, path = Url.split_url(grab.response.url)
+        if not (domain and path):
+            return
+
+        grab.tree.make_links_absolute(grab.response.url)
+
+        links = map(
+            lambda item: unicode(item),
+            grab.tree.xpath('//a/@href')
+        )
+        links = set(filter(
+            lambda link: Url.split_url(link)[0] == domain and
+                         not Url.is_exists(link),
+            links
+        ))
+
+        for link in links:
+            domain, path = Url.split_url(link)
+            if not (domain and path):
+                continue
+            site, _ = Site.objects.get_or_create(domain=domain)
+            url, _ = Url.objects.get_or_create(site=site,
+                                               path=path)
+
+        return links
+
     def task_page(self, grab, task):
         if not hasattr(task, 'level'):
             task.level = 0
 
-        domain, path = split_url(grab.response.url)
-        print domain, path
+        # STORE FOUND IP'S
 
-        # поиск ip-адресов
-        ips = []
-        try:
-            ips = findall('(\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}([:]\d{1,5})?)',
-                          grab.response.unicode_body(),
-                          flags=MULTILINE)
-            ips = map(
-                lambda address: address[0].split(':'),
-                ips
-            )
-            ips = filter(
-                lambda address: self.is_ignored_ip(address[0]),
-                ips
-            )
-        except:
-            pass
+        ips = self.get_unique_ips(grab)
+        if ips:
+            Proxy.objects.bulk_create(ips)
 
-        # сохранение ip-адресов
-        for ip in ips:
-            ip = ip[:2] + [0, ]
-            ip, port = ip[:2]
-            ip = Proxy.ip_to_int(ip)
-            port = int(port)
+        # URL'S STATISTICS
 
-            kwargs = dict(
-                ip=ip,
-                port=port,
-            )
+        domain, path = Url.split_url(grab.response.url)
 
-            proxy, created = Proxy.objects.get_or_create(**kwargs)
+        if domain and path:
+            site, created = Site.objects.get_or_create(domain=domain)
+            url, created = Url.objects.get_or_create(site=site,
+                                                     path=path)
+            url.count = len(ips)
+            url.save()
 
-        # статистика по сайтам
-        site, created = Site.objects.get_or_create(domain=domain)
-        site.save()
-        url, created = Url.objects.get_or_create(site=site,
-                                                 path=path,
-                                                 count=len(ips))
-        url.save()
+        # CHECKING DEPTH
 
-        # поиск ссылок сайта в глубь, если найдены ip-адреса и если глубина не максимальная
-        if (len(ips) < self.count_for_deep_scan) and \
-                (task.level < self.scan_deep):
+        is_minimal_count = \
+            len(ips) < self.settings.SEARCH['COUNT_FOR_DIPPING']
+        is_maximal_deep = \
+            task.level < self.settings.SEARCH['SCAN_DEPTH']
+
+        if is_minimal_count and is_maximal_deep:
             return
 
-        grab.tree.make_links_absolute(grab.response.url)
-        links = map(
-            lambda item: urlparse(unicode(item)),
-            grab.tree.xpath('//a/@href')
-        )
-        links = filter(
-            lambda link: (link.hostname == domain) and
-                         not Url.is_exists(*split_url(link.geturl())),
-            links
-        )
-        links = set(map(
-            lambda item: item.geturl(),
-            links
-        ))
-        if not links:
-            return
+        # FOLLOWING URL'S
 
-        # создание задач на обход ссылок
-        for link in links:
-            yield task.clone(
-                url=link,
-                level=task.level + 1,
-            )
+        links = self.get_unviewed_url(grab)
+
+        if links:
+            for link in links:
+                yield task.clone(
+                    url=link,
+                    level=task.level + 1,
+                )
 
 
 class Command(BaseCommand):
-    help = 'Search proxies'
+    help = _('Search proxies')
 
     def handle(self, *args, **options):
+        basicConfig(level=DEBUG)
+        finder = ProxyFinder(thread_number=30)
         try:
-            finder = ProxyFinder(thread_number=30)
             finder.run()
         except KeyboardInterrupt:
-            self.stdout.write('^Interrupt')
+            self.stdout.write('^Interrupt\n')
+        self.stdout.write(finder.render_stats())
