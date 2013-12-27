@@ -2,6 +2,7 @@
 
 from gevent.monkey import patch_all; patch_all()
 
+from abc import ABCMeta, abstractmethod
 from pprint import pprint
 from json import loads
 from socket import AF_INET, SOCK_STREAM
@@ -9,99 +10,281 @@ from os.path import dirname, join
 from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
-from django.db.transaction import commit_on_success
+#from django.db.transaction import commit_on_success
+from django.db.transaction import atomic
 from django.db.models import Q
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from requests import get, post
 from gevent import spawn, joinall
-from gevent.socket import socket
+from gevent.socket import socket as gsocket
 from pygeoip import GeoIP, MEMORY_CACHE
+import human_curl
+import requests
 
 from ...models import Proxy, Site, Url
 from settings import get_settings
 
 
-gi4 = GeoIP(join(dirname(__file__), 'GeoIP.dat'), MEMORY_CACHE)
+#class ProxyInfo(object):
+#    __metaclass__ = ABCMeta
+#
+#    def __init__(self, proxy_object):
+#        self.host = host
+#        self.port = port
+#        self.country = None
+#        self.is_up = False
+#        self.types = []
 
 
-def get_country_code(ip):
-    u"""Код страны по IP"""
-    return gi4.country_code_by_addr(ip)
+class ProxyChecker(object):
+    def __init__(self):
+        self._local_ip = None
+        self._gi4 = GeoIP(join(dirname(__file__), 'GeoIP.dat'),
+                          MEMORY_CACHE)
+        self.settings = get_settings()
+        super(ProxyChecker, self).__init__()
 
+    @abstractmethod
+    def proxies_iterator(self):
+        yield None
 
-def get_ip():
-    u"""Возвращает свой IP"""
-    if not hasattr(get_ip, '__result'):
-        answer = get('http://httpbin.org/ip').json()
-        get_ip.__result = answer['origin']
-    return get_ip.__result
+    def run(self):
+        for proxies in self.proxies_iterator():
+            with atomic():
+                proxies = self.extend_addresses(proxies)
 
+                #
+                for proxy in proxies:
+                    proxy.is_get = False
+                    proxy.is_post = False
+                    proxy.is_anonymously = False
+                    proxy.country_code = None
+                    proxy.type = 0
 
-def check_opened(host, port):
-    u"""Проверка открытости порта"""
-    try:
-        s = socket(AF_INET, SOCK_STREAM)
-        s.connect((host, port))
-        s.close()
-    except:
-        return False
-    return True
+                # фильтрация только тех у которых проходит
+                # подключение на порт
+                proxies = self.check_opened(proxies)
 
+                #pprint([
+                #    now(),
+                #])
 
-class Checkers:
-    u"""Проверялка проксей"""
+                for proxy_type in Proxy.TYPE[1:]:
+                    print 'check for type `%s`' % proxy_type
 
-    def __init__(self, proxy_type):
-        self.proxy_type = proxy_type
+                    # GET
+                    self.check_get_request(proxy_type, proxies)
 
-    def _make_proxy(self, host, port):
-        address = self.proxy_type + '://' + host + ':' + str(port)
-        return {
-            'http': address,
-        }
+                    # POST
+                    self.check_post_request(proxy_type, proxies)
 
-    def check_anonymouse(self, host, port):
-        u"""Проверка на анонимность"""
-        URL = 'http://httpbin.org/ip'
-        try:
-            response = get(URL,
-                           proxies=self._make_proxy(host, port))
-            result = response.json()
-            return response.url == URL and \
-                   (get_ip() not in result['origin'].split(', '))
-        except:
-            pass
-        return False
+                    #pprint([
+                    #    str(now()),
+                    #    proxies
+                    #])
 
-    def check_get_request(self, host, port):
-        u"""Проверка поддержки GET-запроса"""
-        URL = 'http://httpbin.org/ip'
-        try:
-            response = get(URL,
-                           proxies=self._make_proxy(host, port))
-            result = response.json()
-            return response.url == URL and response.status_code == 200 and 'origin' in result
-        except:
-            pass
-        return False
+                for proxy in proxies:
+                    if not proxy.type:
+                        if proxy.pk:
+                            proxy.delete()
+                        else:
+                            del proxy
+                    else:
+                        proxy.country_code = self.get_country_code(
+                            proxy.address()
+                        )
+                        proxy.checked = now()
+                        proxy.save()
 
-    def check_post_request(self, host, port):
-        u"""Проверка поддержки POST-запросов"""
+            #return
+
+    def get_country_code(self, ip):
+        u"""Код страны по IP"""
+        return self._gi4.country_code_by_addr(ip)
+
+    @property
+    def local_ip(self):
+        if not self._local_ip:
+            answer = requests.get('http://httpbin.org/ip').json()
+            self._local_ip = answer['origin']
+        return self._local_ip
+
+    def extend_addresses(self, proxies):
+        u"""Дополнение списка проксей возможными портами"""
+
+        additional = []
+
+        addresses = [
+            proxy.as_tuple()
+            for proxy in proxies
+            if proxy.port
+        ]
+
+        for port in set(self.settings.CHECK['PORTS']):
+            for proxy in proxies:
+                if proxy.as_tuple() in addresses:
+                    continue
+                if not proxy.port:
+                    proxy.port = port
+                else:
+                    other_proxy, _ = Proxy.objects.get_or_create(
+                        ip=proxy.ip,
+                        port=port
+                    )
+                    additional.append(other_proxy)
+
+        #_all = [
+        #    proxy.as_tuple()
+        #    for proxy in (proxies + additional)
+        #]
+        #
+        #pprint([
+        #    'achtung!',
+        #    [
+        #        (_all.count(_), _)
+        #        for _ in set(_all)
+        #    ]
+        #])
+
+        return proxies + additional
+
+    def check_opened(self, proxies):
+        u"""Проверка открытости порта"""
+
+        def checker(host, port):
+            try:
+                s = gsocket(AF_INET, SOCK_STREAM)
+                s.connect((host, port))
+                s.close()
+            except:
+                return False
+            return True
+
+        jobs = [
+            spawn(checker, proxy.address(), proxy.port)
+            for proxy in proxies
+        ]
+        joinall(
+            jobs,
+            timeout=self.settings.CHECK['NETWORK_TIMEOUT']
+        )
+
+        result = []
+
+        for index, job in enumerate(jobs):
+            if job.value:
+                result.append(proxies[index])
+            elif proxies[index].pk:
+                proxies[index].delete()
+
+        return result
+
+    def check_get_request(self, proxy_type, proxies):
+        u"""Проверка GET-запросов"""
+
+        URL = 'http://httpbin.org/get'
+        valid = []
+        anonymously = []
+
+        def success_callback(response, async_client, opener):
+            try:
+                proxy = response.request._proxy[1]
+
+                content = loads(response.content)
+                is_valid = response.url == URL and \
+                           'origin' in content and \
+                           response.status_code == 200
+                if not is_valid:
+                    return
+                valid.append(proxy)
+                if self.local_ip not in content['origin'].split(', '):
+                    anonymously.append(proxy)
+            except:
+                pass
+
+        client = human_curl.AsyncClient(
+            success_callback=success_callback,
+            fail_callback=lambda **kwargs: None
+        )
+
+        for proxy in proxies:
+            client.method(
+                'GET',
+                url=URL,
+                timeout=self.settings.CHECK['NETWORK_TIMEOUT'],
+                connection_timeout=self.settings.CHECK['NETWORK_TIMEOUT'],
+                proxy=(proxy_type, proxy.as_tuple())
+            )
+
+        client.start()
+
+        for proxy in proxies:
+            if proxy.as_tuple() in valid:
+                proxy.is_get = True
+                proxy.type = Proxy.TYPE.index(proxy_type)
+
+            if proxy.as_tuple() in anonymously:
+                proxy.is_anonymously = True
+
+    def check_post_request(self, proxy_type, proxies):
+        u"""Проверка POST-запросов"""
+
         URL = 'http://httpbin.org/post'
-        data = {
+        DATA = {
             'field1': 'value1',
             'field2': 'value2',
         }
-        try:
-            response = post(URL,
-                            data=data,
-                            proxies=self._make_proxy(host, port))
-            result = response.json()
-            return response.url == URL and result['form'] == data
-        except:
-            pass
-        return False
+        valid = []
+
+        def success_callback(response, async_client, opener):
+            try:
+                content = loads(response.content)
+                is_valid = response.url == URL and \
+                           'origin' in content and \
+                           response.status_code == 200 and \
+                           content['form'] == DATA
+                if not is_valid:
+                    return
+                valid.append(response.request._proxy[1])
+            except:
+                pass
+
+        client = human_curl.AsyncClient(
+            success_callback=success_callback,
+            fail_callback=lambda **kwargs: None
+        )
+
+        for proxy in proxies:
+            client.method(
+                'post',
+                url=URL,
+                data=DATA,
+                timeout=self.settings.CHECK['NETWORK_TIMEOUT'],
+                connection_timeout=self.settings.CHECK['NETWORK_TIMEOUT'],
+                proxy=(proxy_type, proxy.as_tuple())
+            )
+
+        client.start()
+
+        for proxy in proxies:
+            if proxy.as_tuple() in valid:
+                proxy.is_post = True
+                proxy.type = Proxy.TYPE.index(proxy_type)
+
+
+class DBProxyChecker(ProxyChecker):
+    def proxies_iterator(self):
+        queryset = Proxy.objects.filter(
+            Q(checked=None) |
+            Q(checked__lte=now() - timedelta(days=1))
+        )
+        while True:
+            proxies = queryset\
+                .order_by('?')\
+                .all()
+            proxies = proxies[:self.settings.CHECK['ITERATE_SIZE']]
+            yield list(proxies)
 
 
 class Command(BaseCommand):
@@ -111,132 +294,9 @@ class Command(BaseCommand):
         super(Command, self).__init__(*args, **kwargs)
         self.settings = get_settings()
 
-    def remove_addresses(self, addresses):
-        pass
-
-    def split_valid(self, addresses, jobs):
-        valid = [
-            address
-            for index, address in enumerate(addresses)
-            if jobs[index].value
-        ]
-        invalid = [
-            address
-            for index, address in enumerate(addresses)
-            if not jobs[index].value
-        ]
-        return valid, invalid
-
-    def check_working(self, func, addresses):
-        jobs = [
-            spawn(func, *(host, port, ))
-            for host, port in addresses
-        ]
-        joinall(jobs, timeout=self.settings.CHECK['NETWORK_TIMEOUT'])
-        return self.split_valid(addresses, jobs)
-
-    @commit_on_success
-    def check_addresses(self, proxies):
-        u"""Проверка списка проксей по всем типам проксей"""
-
-        results = {}
-
-        # расширение адресов дополнительными портами
-        addresses = []
-        for proxy in proxies:
-            if proxy.port:
-                addresses.append((proxy.address(), proxy.port, ))
-            addresses.extend([
-                (proxy.address(), port, )
-                for port in self.settings.CHECK['PORTS']
-            ])
-
-        # IS UP
-        print 'checking up'
-        is_up, down_hosts = self.check_working(check_opened,
-                                               addresses)
-        #
-        for host, port in down_hosts:
-            Proxy.objects.\
-                filter(ip=Proxy.ip_to_int(host),
-                       port=port).\
-                delete()
-        #
-        for address in is_up:
-            results[address] = {
-                'is_up': True,
-                'type': Proxy.TYPE[0],
-                'get': False,
-                'post': False,
-                'anonymously': False,
-            }
-
-        #
-        for proxy_type in Proxy.TYPE[1:]:
-            checkers = Checkers(proxy_type)
-
-            # GET
-            print 'checking GET', proxy_type
-            with_get, no_get = self.check_working(checkers.check_get_request, is_up)
-            if not with_get:
-                continue
-            for address in with_get:
-                results[address]['type'] = proxy_type
-                results[address]['get'] = True
-
-            # POST
-            print 'checking POST', proxy_type
-            with_post, no_post = self.check_working(checkers.check_post_request, with_get)
-            for address in with_post:
-                results[address]['post'] = True
-
-            # ANONYMOUSE
-            print 'checking anonymously', proxy_type
-            anonymously, not_anonymously = self.check_working(checkers.check_anonymouse, with_get)
-            for address in anonymously:
-                results[address]['anonymously'] = True
-
-            pprint([
-                (address, data)
-                for address, data in results.iteritems()
-                if data['type'] == proxy_type
-            ])
-
-        #
-        for address, data in results.iteritems():
-            host, port = address
-            proxy, created = Proxy.objects.get_or_create(
-                ip=Proxy.ip_to_int(host),
-                port=port
-            )
-            proxy.is_get = data['get']
-            proxy.is_post = data['post']
-            proxy.is_anonymously = data['anonymously']
-            proxy.type = Proxy.TYPE.index(data['type'])
-            proxy.country_code = get_country_code(proxy.address())
-            proxy.checked = now()
-            proxy.save()
-
-        pprint(results)
-
-    def yield_per(self, queryset, size):
-        u"""Генерация пачками по size"""
-        chunk = []
-        for item in queryset.all():
-            chunk.append(item)
-            while len(chunk) >= size:
-                yield chunk[:size]
-                chunk = chunk[size:]
-        if chunk:
-            yield chunk
-
     def handle(self, *args, **options):
         try:
-            # перебор рабочих хостов пачками и проверка проксей
-            queryset = Proxy.objects.filter(Q(checked=None) |
-                                            Q(checked__lte=now() - timedelta(days=1)))
-            for proxies in self.yield_per(queryset,
-                                          self.settings.CHECK['ITERATE_SIZE']):
-                self.check_addresses(proxies)
+            checker = DBProxyChecker()
+            checker.run()
         except KeyboardInterrupt:
             self.stdout.write('^Interrupt')

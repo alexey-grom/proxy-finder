@@ -15,8 +15,8 @@ class Proxy(models.Model):
         'unknown',
         'http',
         # # 'https',
-        # 'socks4',
-        # 'socks5',
+        'socks4',
+        'socks5',
     ]
     TYPE_CHOICES = [(index, _(value)) for index, value in enumerate(TYPE)]
 
@@ -78,8 +78,18 @@ class Proxy(models.Model):
         return address
 
     def __unicode__(self):
-        return '%s %s' % (self.address(self.port),
-                          self.TYPE[self.type])
+        info = [self.address(self.port),
+                self.TYPE[self.type]]
+        if self.is_get:
+            info.append('GET')
+        if self.is_post:
+            info.append('POST')
+        if self.is_anonymously:
+            info.append('anonymously')
+        return ' '.join(info)
+
+    def as_tuple(self):
+        return (self.address(), self.port)
 
     @staticmethod
     def ip_to_int(ip):

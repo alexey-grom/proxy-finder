@@ -19,8 +19,17 @@ DEFAULT_SETTINGS = {
         ],
     },
     'CHECK': {
-        'PORTS': [80, 8080, 8081, 8181, 3128, 808, 8000, ],
-        'ITERATE_SIZE': 20,
+        'PORTS': [80,
+                  8080,
+                  8081,
+                  8181,
+                  3128,
+                  808,
+                  8000,
+                  443,
+                  1080,
+                  559, ],
+        'ITERATE_SIZE': 10,
         'NETWORK_TIMEOUT': 5,
     }
 }

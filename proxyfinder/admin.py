@@ -86,6 +86,7 @@ class ProxyAdmin(admin.ModelAdmin):
             port = obj.port
         return obj.address(port)
     display_ip.short_description = _('IP:port')
+    display_ip.admin_order_field = 'ip'
 
 
 class UrlsInline(admin.StackedInline):

@@ -6,6 +6,7 @@ lxml
 grab
 gevent
 requests
+human_curl
 
 pygeoip
 
