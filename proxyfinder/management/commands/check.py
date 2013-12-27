@@ -3,19 +3,16 @@
 from gevent.monkey import patch_all; patch_all()
 
 from abc import ABCMeta, abstractmethod
-from pprint import pprint
 from json import loads
 from socket import AF_INET, SOCK_STREAM
 from os.path import dirname, join
 from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
-#from django.db.transaction import commit_on_success
 from django.db.transaction import atomic
 from django.db.models import Q
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-from requests import get, post
 from gevent import spawn, joinall
 from gevent.socket import socket as gsocket
 from pygeoip import GeoIP, MEMORY_CACHE
@@ -24,17 +21,6 @@ import requests
 
 from ...models import Proxy, Site, Url
 from settings import get_settings
-
-
-#class ProxyInfo(object):
-#    __metaclass__ = ABCMeta
-#
-#    def __init__(self, proxy_object):
-#        self.host = host
-#        self.port = port
-#        self.country = None
-#        self.is_up = False
-#        self.types = []
 
 
 class ProxyChecker(object):
@@ -66,23 +52,12 @@ class ProxyChecker(object):
                 # подключение на порт
                 proxies = self.check_opened(proxies)
 
-                #pprint([
-                #    now(),
-                #])
-
                 for proxy_type in Proxy.TYPE[1:]:
-                    print 'check for type `%s`' % proxy_type
-
                     # GET
                     self.check_get_request(proxy_type, proxies)
 
                     # POST
                     self.check_post_request(proxy_type, proxies)
-
-                    #pprint([
-                    #    str(now()),
-                    #    proxies
-                    #])
 
                 for proxy in proxies:
                     if not proxy.type:
@@ -133,19 +108,6 @@ class ProxyChecker(object):
                         port=port
                     )
                     additional.append(other_proxy)
-
-        #_all = [
-        #    proxy.as_tuple()
-        #    for proxy in (proxies + additional)
-        #]
-        #
-        #pprint([
-        #    'achtung!',
-        #    [
-        #        (_all.count(_), _)
-        #        for _ in set(_all)
-        #    ]
-        #])
 
         return proxies + additional
 
