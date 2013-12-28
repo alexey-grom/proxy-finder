@@ -20,3 +20,5 @@ django-filter
 django-crispy-forms
 django-grappelli
 django-rosetta
+django-pipeline
+django-bootstrap3

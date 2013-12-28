@@ -1,0 +1,72 @@
+{% extends 'layout.html' %}
+
+{% load bootstrap3 %}
+{% load i18n %}
+{% load proxyfinder %}
+
+{% block content %}
+    {% if proxy_list %}
+        <div class="row">
+            <div class="col-md-9">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <td>{% trans '#' %}</td>
+                            <td>{% trans 'IP:port' %}</td>
+                            <td>{% trans 'Proxy type' %}</td>
+                            <td>{% trans 'GET' %}</td>
+                            <td>{% trans 'POST' %}</td>
+                            <td>{% trans 'Anonymously' %}</td>
+                            <td>{% trans 'Country' %}</td>
+                            <td>{% trans 'Checked at' %}</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proxy in proxy_list %}
+                            <tr>
+                                <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                                <td>{{ proxy.format }}</td>
+                                <td>{% trans proxy.type_name %}</td>
+                                <td>{{ proxy.is_get|yesno_img }}</td>
+                                <td>{{ proxy.is_post|yesno_img }}</td>
+                                <td>{{ proxy.is_anonymously|yesno_img }}</td>
+                                <td>{{ proxy.country }}</td>
+                                <td>{{ proxy.checked|timesince }} {% trans 'ago' %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-3">
+                <form action="" class="form">
+                    {% bootstrap_form filter.form %}
+                    {% bootstrap_button 'Update' %}
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                {% bootstrap_pagination page_obj %}
+            </div>
+            <div class="col-md-6 col-md-offset-3 text-center">
+                {% trans 'Shown' %}
+                {{ page_obj.start_index }}-{{ page_obj.end_index }}
+                {% trans 'of' %}
+                {{ page_obj.paginator.count }}
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-md-12">
+                <h4>По Вашему запросу ничего не найдено! Попробуйте изменить параметры фильтрации.</h4>
+            </div>
+            <div class="col-md-4 col-md-offset-4">
+                <form action="" class="form">
+                    {% bootstrap_form filter.form %}
+                    {% bootstrap_button 'Update' %}
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-26 19:50+0700\n"
-"PO-Revision-Date: 2013-12-26 19:47+0700\n"
+"POT-Creation-Date: 2013-12-29 02:31+0700\n"
+"PO-Revision-Date: 2013-12-29 01:38+0700\n"
 "Last-Translator:   <alxgrmv@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -20,98 +20,132 @@ msgstr ""
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Translated-Using: django-rosetta 0.7.2\n"
 
-#: admin.py:10
+#: admin.py:10 templates/proxyfinder/list.html:20
 msgid "Country"
 msgstr "Страна"
 
-#: admin.py:88
+#: admin.py:88 templates/proxyfinder/list.html:15
 msgid "IP:port"
 msgstr "IP:порт"
 
-#: admin.py:132
+#: admin.py:133
 msgid "Scanned pages"
 msgstr "Проверено страниц"
 
-#: admin.py:136 models.py:123
+#: admin.py:137 models.py:159
 msgid "Finded count"
 msgstr "Найдено"
 
-#: models.py:24
+#: models.py:35
 msgid "Long IP address"
 msgstr "IP адрес"
 
-#: models.py:26
+#: models.py:37
 msgid "Port"
 msgstr "Порт"
 
-#: models.py:30
+#: models.py:41 templates/proxyfinder/list.html:16
 msgid "Proxy type"
 msgstr "Тип прокси"
 
-#: models.py:34
+#: models.py:45
 msgid "Can GET"
 msgstr "Поддержка GET-запросов"
 
-#: models.py:37
+#: models.py:48
 msgid "Can POST"
 msgstr "Поддержка POST-запросов"
 
-#: models.py:40
+#: models.py:51
 msgid "Is anonymously"
 msgstr "Анонимна"
 
-#: models.py:47
+#: models.py:58
 msgid "Country code"
 msgstr "Код страны"
 
-#: models.py:51
+#: models.py:62
 msgid "Updated at"
 msgstr "Дата обновления"
 
-#: models.py:55
+#: models.py:66 templates/proxyfinder/list.html:21
 msgid "Checked at"
 msgstr "Дата проверки"
 
-#: models.py:96
+#: models.py:102
+msgid "unknown"
+msgstr "неизвестно"
+
+#: models.py:132
 msgid "Proxy"
 msgstr "Прокси"
 
-#: models.py:97
+#: models.py:133
 msgid "Proxies"
 msgstr "Прокси"
 
-#: models.py:104
+#: models.py:140
 msgid "Domain"
 msgstr "Домен"
 
-#: models.py:110 models.py:116
+#: models.py:146 models.py:152
 msgid "Site"
 msgstr "Сайт"
 
-#: models.py:111
+#: models.py:147
 msgid "Sites"
 msgstr "Сайты"
 
-#: models.py:118
+#: models.py:154
 msgid "Path"
 msgstr "Путь"
 
-#: models.py:122
+#: models.py:158
 msgid "Last check time"
 msgstr "Время последней проверки"
 
-#: models.py:147
+#: models.py:183
 msgid "Url"
 msgstr "URL"
 
-#: models.py:148
+#: models.py:184
 msgid "Urls"
 msgstr "URL's"
 
-#: management/commands/check.py:108 management/commands/search.py:158
+#: management/commands/check.py:10 management/commands/search.py:12
 msgid "Search proxies"
 msgstr "Найдено адресов"
 
-#, fuzzy
+#: templates/proxyfinder/list.html:14
+msgid "#"
+msgstr "№"
+
+#: templates/proxyfinder/list.html:17
+msgid "GET"
+msgstr "Поддержка GET-запросов"
+
+#: templates/proxyfinder/list.html:18
+msgid "POST"
+msgstr "Поддержка POST-запросов"
+
+#: templates/proxyfinder/list.html:19
+msgid "Anonymously"
+msgstr "Анонимна"
+
+#: templates/proxyfinder/list.html:34
+msgid "ago"
+msgstr "назад"
+
+#: templates/proxyfinder/list.html:52
+msgid "Shown"
+msgstr "Показано"
+
+#: templates/proxyfinder/list.html:54
+msgid "of"
+msgstr "из"
+
+#~ msgid "Type"
+#~ msgstr "Тип"
+
 #~ msgid "Proxies found"
 #~ msgstr "Прокси"

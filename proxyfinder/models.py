@@ -10,15 +10,26 @@ from django.utils.translation import ugettext_lazy as _
 from countries import country_codes
 
 
+class ProxyQualityManager(models.Manager):
+    def get_queryset(self):
+        queryset = super(ProxyQualityManager, self).get_queryset()
+        queryset = queryset.extra(select={
+            'quality': 'is_anonymously * 30 + '
+                       'is_post * 20 + '
+                       'is_get * 10',
+        })
+        return queryset
+
+
 class Proxy(models.Model):
     TYPE = [
         'unknown',
-        'http',
-        # # 'https',
-        'socks4',
-        'socks5',
+        'HTTP',
+        'SOCKS4',
+        'SOCKS5',
     ]
-    TYPE_CHOICES = [(index, _(value)) for index, value in enumerate(TYPE)]
+    TYPE_CHOICES = [(index, _(value))
+                    for index, value in enumerate(TYPE)]
 
     ip = models.PositiveIntegerField(db_index=True,
                                      verbose_name=_('Long IP address'))
@@ -54,6 +65,9 @@ class Proxy(models.Model):
                                    null=True,
                                    verbose_name=_('Checked at'))
 
+    objects = models.Manager()
+    quality = ProxyQualityManager()
+
     def address(self, port=None):
         u"""Перевод хранящегося в long адреса в строковое представление"""
 
@@ -76,6 +90,17 @@ class Proxy(models.Model):
             address += ':' + str(port)
 
         return address
+
+    def format(self):
+        return self.address(self.port)
+
+    def type_name(self):
+        return self.TYPE[self.type]
+
+    def country(self):
+        if self.country_code not in country_codes:
+            return _('unknown')
+        return country_codes[self.country_code]
 
     def __unicode__(self):
         info = [self.address(self.port),
@@ -103,6 +128,7 @@ class Proxy(models.Model):
         unique_together = [
             ['ip', 'port', ],
         ]
+        ordering = ['-checked', 'ip', 'port', ]
         verbose_name = _('Proxy')
         verbose_name_plural = _('Proxies')
 

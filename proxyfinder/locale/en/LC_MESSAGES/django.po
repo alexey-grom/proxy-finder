@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-26 19:50+0700\n"
+"POT-Creation-Date: 2013-12-29 02:31+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,94 +17,126 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: admin.py:10
+#: admin.py:10 templates/proxyfinder/list.html:20
 msgid "Country"
 msgstr ""
 
-#: admin.py:88
+#: admin.py:88 templates/proxyfinder/list.html:15
 msgid "IP:port"
 msgstr ""
 
-#: admin.py:132
+#: admin.py:133
 msgid "Scanned pages"
 msgstr ""
 
-#: admin.py:136 models.py:123
+#: admin.py:137 models.py:159
 msgid "Finded count"
 msgstr ""
 
-#: models.py:24
+#: models.py:35
 msgid "Long IP address"
 msgstr ""
 
-#: models.py:26
+#: models.py:37
 msgid "Port"
 msgstr ""
 
-#: models.py:30
+#: models.py:41 templates/proxyfinder/list.html:16
 msgid "Proxy type"
 msgstr ""
 
-#: models.py:34
+#: models.py:45
 msgid "Can GET"
 msgstr ""
 
-#: models.py:37
+#: models.py:48
 msgid "Can POST"
 msgstr ""
 
-#: models.py:40
+#: models.py:51
 msgid "Is anonymously"
 msgstr ""
 
-#: models.py:47
+#: models.py:58
 msgid "Country code"
 msgstr ""
 
-#: models.py:51
+#: models.py:62
 msgid "Updated at"
 msgstr ""
 
-#: models.py:55
+#: models.py:66 templates/proxyfinder/list.html:21
 msgid "Checked at"
 msgstr ""
 
-#: models.py:96
+#: models.py:102
+msgid "unknown"
+msgstr ""
+
+#: models.py:132
 msgid "Proxy"
 msgstr ""
 
-#: models.py:97
+#: models.py:133
 msgid "Proxies"
 msgstr ""
 
-#: models.py:104
+#: models.py:140
 msgid "Domain"
 msgstr ""
 
-#: models.py:110 models.py:116
+#: models.py:146 models.py:152
 msgid "Site"
 msgstr ""
 
-#: models.py:111
+#: models.py:147
 msgid "Sites"
 msgstr ""
 
-#: models.py:118
+#: models.py:154
 msgid "Path"
 msgstr ""
 
-#: models.py:122
+#: models.py:158
 msgid "Last check time"
 msgstr ""
 
-#: models.py:147
+#: models.py:183
 msgid "Url"
 msgstr ""
 
-#: models.py:148
+#: models.py:184
 msgid "Urls"
 msgstr ""
 
-#: management/commands/check.py:108 management/commands/search.py:158
+#: management/commands/check.py:10 management/commands/search.py:12
 msgid "Search proxies"
+msgstr ""
+
+#: templates/proxyfinder/list.html:14
+msgid "#"
+msgstr ""
+
+#: templates/proxyfinder/list.html:17
+msgid "GET"
+msgstr ""
+
+#: templates/proxyfinder/list.html:18
+msgid "POST"
+msgstr ""
+
+#: templates/proxyfinder/list.html:19
+msgid "Anonymously"
+msgstr ""
+
+#: templates/proxyfinder/list.html:34
+msgid "ago"
+msgstr ""
+
+#: templates/proxyfinder/list.html:52
+msgid "Shown"
+msgstr ""
+
+#: templates/proxyfinder/list.html:54
+msgid "of"
 msgstr ""

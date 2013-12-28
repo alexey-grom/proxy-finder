@@ -127,6 +127,17 @@ class ProxyChecker(object):
                             proxy.address()
                         )
                         proxy.checked = now()
+
+                        #***
+                        ex = Proxy.objects.get(ip=proxy.ip,
+                                               port=proxy.port)
+                        if ex and not proxy.pk:
+                            print 'ALARM!!!!!'
+                            print proxy
+                            print ex
+                            exit()
+                        #***
+
                         proxy.save()
 
             #return
@@ -304,6 +315,17 @@ class DBProxyChecker(ProxyChecker):
                 all()
             proxies = proxies[:self.settings.CHECK['ITERATE_SIZE']]
             yield list(proxies)
+
+
+class DirectProxyChecker(ProxyChecker):
+    def __init__(self, proxies):
+        super(DirectProxyChecker, self).__init__()
+        self._for_check = proxies
+
+    def proxies_iterator(self):
+        count = self.settings.CHECK['ITERATE_SIZE']
+        for index in xrange(0, len(self._for_check), count):
+            yield self._for_check[index:index + count]
 
 
 class ProxyFinder(Spider):

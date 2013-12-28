@@ -14,6 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+relative_path = lambda *args: os.path.join(BASE_DIR, *args)
 
 
 SITE_ID = 1
@@ -27,11 +28,10 @@ SECRET_KEY = '%shvv0!dce3ow#kw9(y&400cs+s+q=_hoban#^eg9p_5+kh*ha'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = DEBUG
 
 INTERNAL_IPS = ['127.0.0.1', ]
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*', ]
 
 
 # Application definition
@@ -52,6 +52,9 @@ INSTALLED_APPS = (
     'debug_toolbar',
     'rest_framework',
     'rosetta',
+    'crispy_forms',
+    'pipeline',
+    'bootstrap3',
 
     'layout',
     'proxyfinder',
@@ -67,6 +70,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'layout.middleware.LayoutMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
+    'pipeline.middleware.MinifyHTMLMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
@@ -118,8 +124,10 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.media',
     'django.core.context_processors.static',
     'django.core.context_processors.tz',
+    'django.core.context_processors.request',
     'django.contrib.messages.context_processors.messages',
     'django.core.context_processors.i18n',
+    'layout.context_processors.layout',
 ]
 
 
@@ -127,6 +135,44 @@ TEMPLATE_CONTEXT_PROCESSORS = [
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = relative_path('static')
+STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
+
+PIPELINE_ENABLED = not DEBUG
+PIPELINE_CSS = {
+    'vendor': {
+        'source_filenames': (
+            'css/bootstrap.css',
+        ),
+        'output_filename': 'css/vendor.css',
+    },
+    'own': {
+        'source_filenames': (
+            'css/main.css',
+        ),
+        'output_filename': 'css/own.css',
+    },
+}
+
+PIPELINE_JS = {
+    'header': {
+        'source_filenames': (
+            'js/vendor/jquery-1.10.1.min.js',
+            'js/vendor/modernizr-2.6.2-respond-1.1.0.min.js',
+        ),
+        'output_filename': 'js/header.js',
+    },
+    'footer': {
+        'source_filenames': (
+            'js/vendor/bootstrap.js',
+            'js/main.js',
+        ),
+        'output_filename': 'js/footer.js',
+    }
+}
+
+PIPELINE_CSS_COMPRESSOR = 'pipeline.compressors.yuglify.YuglifyCompressor'
+PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yuglify.YuglifyCompressor'
 
 
 REST_FRAMEWORK = {
@@ -147,13 +193,6 @@ REST_FRAMEWORK = {
 }
 
 
-#PROXY_FINDER = {
-#    'SEARCH_QUERIES': [
-#        'free proxy list',
-#        'http proxies',
-#    ]
-#}
-
 LOGGING = {
     'version': 1,
     'handlers': {
@@ -167,6 +206,11 @@ LOGGING = {
         },
     },
     'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+        },
         'grab': {
             'handlers': ['console'],
             'level': 'DEBUG',
