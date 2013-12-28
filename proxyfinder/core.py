@@ -128,15 +128,15 @@ class ProxyChecker(object):
                         )
                         proxy.checked = now()
 
-                        #***
-                        ex = Proxy.objects.get(ip=proxy.ip,
-                                               port=proxy.port)
-                        if ex and not proxy.pk:
-                            print 'ALARM!!!!!'
-                            print proxy
-                            print ex
-                            exit()
-                        #***
+                        ##***
+                        #ex = Proxy.objects.get(ip=proxy.ip,
+                        #                       port=proxy.port)
+                        #if ex and not proxy.pk:
+                        #    print 'ALARM!!!!!'
+                        #    print proxy
+                        #    print ex
+                        #    exit()
+                        ##***
 
                         proxy.save()
 

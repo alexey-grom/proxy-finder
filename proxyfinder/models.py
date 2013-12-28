@@ -24,9 +24,9 @@ class ProxyQualityManager(models.Manager):
 class Proxy(models.Model):
     TYPE = [
         'unknown',
-        'HTTP',
-        'SOCKS4',
-        'SOCKS5',
+        'http',
+        'socks4',
+        'socks5',
     ]
     TYPE_CHOICES = [(index, _(value))
                     for index, value in enumerate(TYPE)]
