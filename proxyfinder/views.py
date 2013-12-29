@@ -33,8 +33,7 @@ class ProxiesFilter(FilterSet):
         choices=field_choices_with_all(
             Proxy,
             'type',
-            _('Any'),
-            filterer=lambda choices: choices[1:]
+            _('Any')
         )
     )
     is_get = BooleanFilter(
@@ -50,7 +49,7 @@ class ProxiesFilter(FilterSet):
         widget=AnyBooleanSelect
     )
     country_code = ChoiceFilter(
-        label=Proxy._meta.get_field('country_code').verbose_name,
+        label=_('Country'),
         choices=field_choices_with_all(
             Proxy,
             'country_code',
