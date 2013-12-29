@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-29 10:58+0700\n"
-"PO-Revision-Date: 2013-12-29 10:59+0700\n"
+"POT-Creation-Date: 2013-12-30 04:27+0700\n"
+"PO-Revision-Date: 2013-12-30 04:27+0700\n"
 "Last-Translator:   <alxgrmv@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Translated-Using: django-rosetta 0.7.2\n"
 
-#: admin.py:10 templates/proxyfinder/list.html:20
+#: admin.py:10 views.py:52 templates/proxyfinder/list.html:21
 msgid "Country"
 msgstr "Страна"
 
-#: admin.py:88 templates/proxyfinder/list.html:15
+#: admin.py:88 templates/proxyfinder/list.html:16
 msgid "IP:port"
 msgstr "IP:порт"
 
@@ -43,7 +43,7 @@ msgstr "IP адрес"
 msgid "Port"
 msgstr "Порт"
 
-#: models.py:41 views.py:32 templates/proxyfinder/list.html:16
+#: models.py:41 views.py:32 templates/proxyfinder/list.html:17
 msgid "Proxy type"
 msgstr "Тип прокси"
 
@@ -67,7 +67,7 @@ msgstr "Код страны"
 msgid "Updated at"
 msgstr "Дата обновления"
 
-#: models.py:66 templates/proxyfinder/list.html:21
+#: models.py:66 templates/proxyfinder/list.html:22
 msgid "Checked at"
 msgstr "Дата проверки"
 
@@ -131,33 +131,54 @@ msgstr "Все"
 msgid "Search proxies"
 msgstr "Найдено адресов"
 
-#: templates/proxyfinder/list.html:14
+#: templates/proxyfinder/list.html:11
+msgid "Finded proxies"
+msgstr "Найденные прокси"
+
+#: templates/proxyfinder/list.html:15
 msgid "#"
 msgstr "№"
 
-#: templates/proxyfinder/list.html:17
+#: templates/proxyfinder/list.html:18
 msgid "GET"
 msgstr "Поддержка GET-запросов"
 
-#: templates/proxyfinder/list.html:18
+#: templates/proxyfinder/list.html:19
 msgid "POST"
 msgstr "Поддержка POST-запросов"
 
-#: templates/proxyfinder/list.html:19
+#: templates/proxyfinder/list.html:20
 msgid "Anonymously"
 msgstr "Анонимна"
 
-#: templates/proxyfinder/list.html:34
+#: templates/proxyfinder/list.html:35
 msgid "ago"
 msgstr "назад"
 
-#: templates/proxyfinder/list.html:52
+#: templates/proxyfinder/list.html:43 templates/proxyfinder/list.html.py:69
+msgid "Filtering"
+msgstr "Фильтрация"
+
+#: templates/proxyfinder/list.html:45 templates/proxyfinder/list.html.py:71
+msgid "Refresh"
+msgstr "Обновить"
+
+#: templates/proxyfinder/list.html:54
 msgid "Shown"
 msgstr "Показано"
 
-#: templates/proxyfinder/list.html:54
+#: templates/proxyfinder/list.html:56
 msgid "of"
 msgstr "из"
+
+#: templates/proxyfinder/list.html:64
+msgid "Proxies for this filter not found. Try to change filter options."
+msgstr ""
+"По данному фильтру ничего не найдено. Попробуй изменить параметры "
+"фильтрации."
+
+#~ msgid "Update"
+#~ msgstr "Дата обновления"
 
 #~ msgid "Type"
 #~ msgstr "Тип"

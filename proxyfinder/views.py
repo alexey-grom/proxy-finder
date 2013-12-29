@@ -3,6 +3,8 @@ from django.forms import NullBooleanSelect
 from django.utils.translation import ugettext_lazy as _
 from django_filters import FilterSet, ChoiceFilter, BooleanFilter
 from django_filters.views import BaseFilterView
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 
 from models import Proxy
 
@@ -71,8 +73,14 @@ class ProxiesFilter(FilterSet):
 class ProxiesListView(BaseFilterView, ListView):
     filterset_class = ProxiesFilter
     queryset = Proxy.quality.\
-        order_by('-quality').\
-        filter(type__gt=0)
+        filter(type__gt=0).\
+        order_by('-quality')
 
     template_name = 'proxyfinder/list.html'
     paginate_by = 50
+
+    @method_decorator(cache_page(60))
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProxiesListView, self).dispatch(request,
+                                                     *args,
+                                                     **kwargs)

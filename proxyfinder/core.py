@@ -118,26 +118,16 @@ class ProxyChecker(object):
 
                 for proxy in proxies:
                     if not proxy.type:
-                        if proxy.pk:
-                            proxy.delete()
-                        else:
-                            del proxy
+                        pass
+                        #if proxy.pk:
+                        #    proxy.delete()
+                        #else:
+                        #    del proxy
                     else:
                         proxy.country_code = self.get_country_code(
                             proxy.address()
                         )
                         proxy.checked = now()
-
-                        ##***
-                        #ex = Proxy.objects.get(ip=proxy.ip,
-                        #                       port=proxy.port)
-                        #if ex and not proxy.pk:
-                        #    print 'ALARM!!!!!'
-                        #    print proxy
-                        #    print ex
-                        #    exit()
-                        ##***
-
                         proxy.save()
 
             #return
@@ -205,8 +195,8 @@ class ProxyChecker(object):
         for index, job in enumerate(jobs):
             if job.value:
                 result.append(proxies[index])
-            elif proxies[index].pk:
-                proxies[index].delete()
+            #elif proxies[index].pk:
+            #    proxies[index].delete()
 
         return result
 

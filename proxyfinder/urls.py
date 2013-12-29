@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from django.conf.urls import url, patterns, include
 
-from restapi import ProxyViewSet
 from views import ProxiesListView
 
 

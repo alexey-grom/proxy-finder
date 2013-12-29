@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-29 10:58+0700\n"
+"POT-Creation-Date: 2013-12-30 04:25+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: admin.py:10 templates/proxyfinder/list.html:20
+#: admin.py:10 views.py:52 templates/proxyfinder/list.html:21
 msgid "Country"
 msgstr ""
 
-#: admin.py:88 templates/proxyfinder/list.html:15
+#: admin.py:88 templates/proxyfinder/list.html:16
 msgid "IP:port"
 msgstr ""
 
@@ -41,7 +41,7 @@ msgstr ""
 msgid "Port"
 msgstr ""
 
-#: models.py:41 views.py:32 templates/proxyfinder/list.html:16
+#: models.py:41 views.py:32 templates/proxyfinder/list.html:17
 msgid "Proxy type"
 msgstr ""
 
@@ -65,7 +65,7 @@ msgstr ""
 msgid "Updated at"
 msgstr ""
 
-#: models.py:66 templates/proxyfinder/list.html:21
+#: models.py:66 templates/proxyfinder/list.html:22
 msgid "Checked at"
 msgstr ""
 
@@ -129,30 +129,46 @@ msgstr ""
 msgid "Search proxies"
 msgstr ""
 
-#: templates/proxyfinder/list.html:14
+#: templates/proxyfinder/list.html:11
+msgid "Finded proxies"
+msgstr ""
+
+#: templates/proxyfinder/list.html:15
 msgid "#"
 msgstr ""
 
-#: templates/proxyfinder/list.html:17
+#: templates/proxyfinder/list.html:18
 msgid "GET"
 msgstr ""
 
-#: templates/proxyfinder/list.html:18
+#: templates/proxyfinder/list.html:19
 msgid "POST"
 msgstr ""
 
-#: templates/proxyfinder/list.html:19
+#: templates/proxyfinder/list.html:20
 msgid "Anonymously"
 msgstr ""
 
-#: templates/proxyfinder/list.html:34
+#: templates/proxyfinder/list.html:35
 msgid "ago"
 msgstr ""
 
-#: templates/proxyfinder/list.html:52
-msgid "Shown"
+#: templates/proxyfinder/list.html:43 templates/proxyfinder/list.html.py:69
+msgid "Filtering"
+msgstr ""
+
+#: templates/proxyfinder/list.html:45 templates/proxyfinder/list.html.py:71
+msgid "Refresh"
 msgstr ""
 
 #: templates/proxyfinder/list.html:54
+msgid "Shown"
+msgstr ""
+
+#: templates/proxyfinder/list.html:56
 msgid "of"
+msgstr ""
+
+#: templates/proxyfinder/list.html:64
+msgid "Proxies for this filter not found. Try to change filter options."
 msgstr ""
