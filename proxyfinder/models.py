@@ -29,7 +29,7 @@ class Proxy(models.Model):
         'socks5',
     ]
     TYPE_CHOICES = [(index, _(value))
-                    for index, value in enumerate(TYPE)]
+                    for index, value in enumerate(TYPE, 1)]
 
     ip = models.PositiveIntegerField(db_index=True,
                                      verbose_name=_('Long IP address'))
