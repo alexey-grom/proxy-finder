@@ -127,8 +127,8 @@ class ProxyChecker(object):
                         proxy.country_code = self.get_country_code(
                             proxy.address()
                         )
-                        proxy.checked = now()
-                        proxy.save()
+                    proxy.checked = now()
+                    proxy.save()
 
             #return
 
