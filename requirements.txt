@@ -17,7 +17,6 @@ django-debug-toolbar
 djangorestframework
 markdown
 django-filter
-django-crispy-forms
 django-grappelli
 django-rosetta
 django-pipeline

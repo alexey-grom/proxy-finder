@@ -12,7 +12,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>{% block title %}{{ layout.title }}{% endblock %} &mdash; {{ layout.sitename }}</title>
+    <title>{% block title %}{% trans 'Main' %}{% endblock %} &mdash; {{ site.name }}</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
     <link href="{% static 'favicon.png' %}" rel="shortcut icon" type="image/png"/>
@@ -22,7 +22,7 @@
     {% compressed_js 'header' %}
 
 </head>
-<body>
+<body ng-app>
 <!--[if lt IE 7]>
     <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
 <![endif]-->
@@ -37,17 +37,34 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{% url 'proxyfinder:about' %}">{{ layout.sitename }}</a>
+            <a class="navbar-brand" href="{% url 'proxyfinder:about' %}">{{ site.name }}</a>
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
                 <li class="{% is_url 'proxyfinder:proxylist' %}">
-                    <a href="{% url 'proxyfinder:proxylist' %}">{% trans 'Proxy list' %}</a>
+                    <a href="{% url 'proxyfinder:proxylist' %}">{% trans 'Proxylist' %}</a>
                 </li>
                 <li class="{% is_url 'proxy-list' %}">
                     <a href="{% url 'proxy-list' %}">{% trans 'API' %}</a>
                 </li>
             </ul>
+
+            <form action="{% url 'change_language' %}" method="post" ng-controller="ChangeLanguage" class="js-change-language">
+                <input type="hidden" name="next" value="{{ request.path }}" />
+                <input type="hidden" name="language" value="{$ current $}" />
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="flag flag-{$ current $}"></i> <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li ng-repeat="lang in langs" ng-show="current != lang.code">
+                                <a href="javascript:void(0);"
+                                   title="{$ lang.name $}"
+                                   ng-click="$parent.current = lang.code"><i class="flag flag-{$ lang.code $}"></i> {$ lang.name $}</a></a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </form>
         </div>
         <!--/.navbar-collapse -->
     </div>
@@ -59,11 +76,54 @@
 
 <nav class="navbar navbar-inverse navbar-fixed-bottom" role="navigation">
     <div class="container">
-        <p class="navbar-text">{{ layout.sitename }} &copy; 2013</p>
+        <p class="navbar-text">{{ site.name }} &copy; 2014</p>
+        <div class="navbar-text pull-right">
+            <div class="yashare-auto-init"
+                 data-yashareLink="{{ site.domain }}"
+                 data-yashareTitle="Free proxylists"
+                 data-yashareDescription="Free proxy service with restapi"
+                 data-yashareImage="http://visual.yandex.ru/i/social90.png"
+                 data-yashareQuickServices="yaru,vkontakte,facebook,twitter,odnoklassniki,moimir,gplus"
+                 data-yashareTheme="counter"
+                 data-yashareType="small"></div>
+        </div>
     </div>
 </nav>
 
 {% compressed_js 'footer' %}
+<script src="//yandex.st/share/cnt.share.js"></script>
+
+<script>
+    var module = angular.module('ng');
+    module.config(function($interpolateProvider) {
+        $interpolateProvider.startSymbol('{$');
+        $interpolateProvider.endSymbol('$}');
+    });
+
+    function ChangeLanguage ($scope) {
+        var $form = $('.js-change-language');
+
+        $scope.langs = [
+            {% for lang_code, lang_name in LANGUAGES %}
+                {
+                    code: '{{ lang_code }}',
+                    name: '{{ lang_name }}'
+                },
+            {% endfor %}
+        ];
+        $scope.current = '{{ LANGUAGE_CODE }}';
+
+        $scope.$watch('current', function (newLang, oldLang) {
+            if (newLang == oldLang) {
+                return;
+            }
+            setTimeout(function () {
+                $form.submit();
+            }, 0);
+        });
+    }
+
+</script>
 
 <script>
     var _gaq = [

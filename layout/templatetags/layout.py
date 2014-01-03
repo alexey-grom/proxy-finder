@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+from json import dumps
+
 from django import template
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
@@ -20,3 +22,16 @@ def is_url(context, name, **kwargs):
     if request and request.path.startswith(url):
         return 'active'
     return ''
+
+
+@register.filter
+def yesno_img(value):
+    src = static('admin/img/icon-%s.gif' % (
+        'yes' if value else 'no'
+    ))
+    return mark_safe('<img src="%s">' % src)
+
+
+@register.filter
+def jsonify(items):
+    return mark_safe(dumps(list(items)))

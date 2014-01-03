@@ -1,8 +1,10 @@
-from api import get_layout
+# encoding: utf-8
+
+from django.contrib.sites.models import get_current_site
+from django.utils.functional import SimpleLazyObject
 
 
-def layout(request):
-    instance = get_layout(request)
+def current_site(request):
     return {
-        'layout': instance.values,
+        'site': SimpleLazyObject(lambda: get_current_site(request))
     }

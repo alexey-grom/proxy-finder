@@ -54,7 +54,7 @@ DEBUG_TOOLBAR_PANELS = [
 
 # Application definition
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -71,31 +71,25 @@ INSTALLED_APPS = (
     'debug_toolbar_line_profiler',
     'rest_framework',
     'rosetta',
-    'crispy_forms',
     'pipeline',
     'bootstrap3',
-    'django_extensions',
 
     'layout',
     'proxyfinder',
 
-)
+]
 
-MIDDLEWARE_CLASSES = (
-    'layout.middleware.LayoutMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    #'django.middleware.cache.CacheMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'pipeline.middleware.MinifyHTMLMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'django.middleware.cache.CacheMiddleware',
-    'django.middleware.common.CommonMiddleware',
-)
+]
 
 ROOT_URLCONF = 'project.urls'
 
@@ -125,7 +119,6 @@ USE_L10N = True
 USE_TZ = True
 
 LOCALE_PATHS = (
-    #os.path.join(BASE_DIR, 'locale'),
     os.path.join(BASE_DIR, 'proxyfinder', 'locale'),
 )
 
@@ -148,7 +141,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.request',
     'django.contrib.messages.context_processors.messages',
     'django.core.context_processors.i18n',
-    'layout.context_processors.layout',
+    'layout.context_processors.current_site',
 ]
 
 
@@ -186,6 +179,7 @@ PIPELINE_JS = {
     'footer': {
         'source_filenames': (
             'js/vendor/bootstrap.js',
+            'js/vendor/angular.js',
             'js/main.js',
         ),
         'output_filename': 'js/footer.js',
@@ -241,17 +235,17 @@ LOGGING = {
 
 
 # CACHE
-if DEBUG:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-        }
-    }
-else:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'proxy-finder',
-            'TIMEOUT': 60 * 10,
-        }
-    }
+#if DEBUG:
+#    CACHES = {
+#        'default': {
+#            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+#        }
+#    }
+#else:
+#    CACHES = {
+#        'default': {
+#            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#            'LOCATION': 'proxy-finder',
+#            'TIMEOUT': 60 * 10,
+#        }
+#    }

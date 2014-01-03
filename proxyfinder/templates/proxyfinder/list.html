@@ -2,7 +2,10 @@
 
 {% load bootstrap3 %}
 {% load i18n %}
-{% load proxyfinder %}
+{% load layout %}
+
+
+{% block title %}{% trans 'Proxylist' %}{% endblock %}
 
 {% block content %}
     {% if proxy_list %}

@@ -2,3 +2,17 @@ body {
     padding-top: 70px;
     padding-bottom: 70px;
 }
+
+.flag {
+    display: inline-block;
+    width: 16px;
+    height: 11px;
+    background: url(../img/flags.png) no-repeat;
+}
+.flag.flag-ru {background-position: -16px 0}
+.flag.flag-en {background-position: 0 -11px}
+
+
+#djDebug #djDebugToolbarHandle {
+    top: 100px !important;
+}

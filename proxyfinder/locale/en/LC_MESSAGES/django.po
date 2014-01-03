@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-30 04:25+0700\n"
+"POT-Creation-Date: 2014-01-03 12:34+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: admin.py:10 views.py:52 templates/proxyfinder/list.html:21
+#: admin.py:10 views.py:54 templates/proxyfinder/list.html:24
 msgid "Country"
 msgstr ""
 
-#: admin.py:88 templates/proxyfinder/list.html:16
+#: admin.py:88 templates/proxyfinder/list.html:19
 msgid "IP:port"
 msgstr ""
 
@@ -41,7 +41,7 @@ msgstr ""
 msgid "Port"
 msgstr ""
 
-#: models.py:41 views.py:32 templates/proxyfinder/list.html:17
+#: models.py:41 views.py:34 templates/proxyfinder/list.html:20
 msgid "Proxy type"
 msgstr ""
 
@@ -65,7 +65,7 @@ msgstr ""
 msgid "Updated at"
 msgstr ""
 
-#: models.py:66 templates/proxyfinder/list.html:22
+#: models.py:66 templates/proxyfinder/list.html:25
 msgid "Checked at"
 msgstr ""
 
@@ -109,19 +109,19 @@ msgstr ""
 msgid "Urls"
 msgstr ""
 
-#: views.py:13 views.py:36
+#: views.py:15 views.py:38
 msgid "Any"
 msgstr ""
 
-#: views.py:14
+#: views.py:16
 msgid "Yes"
 msgstr ""
 
-#: views.py:15
+#: views.py:17
 msgid "No"
 msgstr ""
 
-#: views.py:19
+#: views.py:21
 msgid "All"
 msgstr ""
 
@@ -129,46 +129,62 @@ msgstr ""
 msgid "Search proxies"
 msgstr ""
 
-#: templates/proxyfinder/list.html:11
+#: templates/proxyfinder/about.html:8
+msgid "Free proxylist"
+msgstr ""
+
+#: templates/proxyfinder/about.html:9
+msgid "There is proxylist with restapi updating at realtime!"
+msgstr ""
+
+#: templates/proxyfinder/about.html:10 templates/proxyfinder/list.html:8
+msgid "Proxylist"
+msgstr ""
+
+#: templates/proxyfinder/about.html:11
+msgid "API"
+msgstr ""
+
+#: templates/proxyfinder/list.html:14
 msgid "Finded proxies"
 msgstr ""
 
-#: templates/proxyfinder/list.html:15
+#: templates/proxyfinder/list.html:18
 msgid "#"
 msgstr ""
 
-#: templates/proxyfinder/list.html:18
+#: templates/proxyfinder/list.html:21
 msgid "GET"
 msgstr ""
 
-#: templates/proxyfinder/list.html:19
+#: templates/proxyfinder/list.html:22
 msgid "POST"
 msgstr ""
 
-#: templates/proxyfinder/list.html:20
+#: templates/proxyfinder/list.html:23
 msgid "Anonymously"
 msgstr ""
 
-#: templates/proxyfinder/list.html:35
+#: templates/proxyfinder/list.html:38
 msgid "ago"
 msgstr ""
 
-#: templates/proxyfinder/list.html:43 templates/proxyfinder/list.html.py:69
+#: templates/proxyfinder/list.html:46 templates/proxyfinder/list.html.py:72
 msgid "Filtering"
 msgstr ""
 
-#: templates/proxyfinder/list.html:45 templates/proxyfinder/list.html.py:71
+#: templates/proxyfinder/list.html:48 templates/proxyfinder/list.html.py:74
 msgid "Refresh"
 msgstr ""
 
-#: templates/proxyfinder/list.html:54
+#: templates/proxyfinder/list.html:57
 msgid "Shown"
 msgstr ""
 
-#: templates/proxyfinder/list.html:56
+#: templates/proxyfinder/list.html:59
 msgid "of"
 msgstr ""
 
-#: templates/proxyfinder/list.html:64
+#: templates/proxyfinder/list.html:67
 msgid "Proxies for this filter not found. Try to change filter options."
 msgstr ""

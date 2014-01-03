@@ -81,6 +81,8 @@ class ProxiesListView(BaseFilterView, ListView):
 
     @method_decorator(cache_page(60))
     def dispatch(self, request, *args, **kwargs):
-        return super(ProxiesListView, self).dispatch(request,
-                                                     *args,
-                                                     **kwargs)
+        return super(ProxiesListView, self).dispatch(
+            request,
+            *args,
+            **kwargs
+        )
