@@ -23,3 +23,7 @@ django-pipeline
 django-bootstrap3
 line_profiler==1.0b3
 django-debug-toolbar-line-profiler
+
+celery
+django-celery
+django-kombu

@@ -66,6 +66,9 @@ INSTALLED_APPS = [
     'grappelli',
     'django.contrib.admin',
 
+    'djcelery',
+    'kombu.transport.django',
+
     'south',
     'debug_toolbar',
     'debug_toolbar_line_profiler',
@@ -206,6 +209,15 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+
+# CELERY
+import djcelery
+djcelery.setup_loader()
+
+BROKER_URL = 'django://'
+CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+CELERY_REDIRECT_STDOUTS = False
 
 
 LOGGING = {
