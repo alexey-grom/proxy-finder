@@ -249,3 +249,5 @@ LOGGING = {
 #            'TIMEOUT': 60 * 10,
 #        }
 #    }
+
+from settings_local import *
