@@ -13,6 +13,11 @@ body {
 .flag.flag-en {background-position: 0 -11px}
 
 
+.li-counter {
+    margin-bottom: 0;
+    margin-top: 11px;
+}
+
 #djDebug #djDebugToolbarHandle {
     top: 100px !important;
 }

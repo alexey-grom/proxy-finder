@@ -82,7 +82,7 @@ INSTALLED_APPS = [
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    #'django.middleware.cache.CacheMiddleware',
+    'django.middleware.cache.CacheMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -234,20 +234,11 @@ LOGGING = {
 }
 
 
-# CACHE
-#if DEBUG:
-#    CACHES = {
-#        'default': {
-#            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-#        }
-#    }
-#else:
-#    CACHES = {
-#        'default': {
-#            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-#            'LOCATION': 'proxy-finder',
-#            'TIMEOUT': 60 * 10,
-#        }
-#    }
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
+
 
 from settings_local import *
