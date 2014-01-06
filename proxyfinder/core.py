@@ -409,10 +409,12 @@ class ProxyFinder(Spider):
             kwargs = dict(ip=ip, port=port)
             if Proxy.objects.filter(**kwargs).exists():
                 return None
-            return Proxy.objects.get_or_create(**kwargs)
+            return tuple(kwargs.items())
 
         ips = map(prepare_ip, ips)
         ips = filter(lambda ip: ip is not None, ips)
+        ips = set(ips)
+        ips = map(lambda item: Proxy(**dict(item)), ips)
 
         return ips
 
@@ -451,12 +453,7 @@ class ProxyFinder(Spider):
 
         ips = self.get_unique_ips(grab)
         if ips:
-            new_ips = filter(
-                lambda item: not item[1],
-                ips
-            )
-            Proxy.objects.bulk_create(map(lambda item: item[0],
-                                          new_ips))
+            Proxy.objects.bulk_create(ips)
 
         # URL'S STATISTICS
 
