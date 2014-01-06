@@ -43,6 +43,7 @@ class ProxyAdmin(admin.ModelAdmin):
         'is_post',
         'is_anonymously',
         'country_code',
+        'wrong_count',
     ]
     list_display = [
         'display_ip',
@@ -52,6 +53,7 @@ class ProxyAdmin(admin.ModelAdmin):
         'is_get',
         'is_post',
         'is_anonymously',
+        'wrong_count',
     ]
 
     readonly_fields = [
@@ -63,9 +65,11 @@ class ProxyAdmin(admin.ModelAdmin):
         'is_get',
         'is_post',
         'is_anonymously',
+        'wrong_count',
     ]
 
     ordering = [
+        '-checked',
         'ip',
         'port',
     ]

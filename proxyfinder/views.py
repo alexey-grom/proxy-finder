@@ -74,7 +74,7 @@ class ProxiesListView(BaseFilterView, ListView):
     filterset_class = ProxiesFilter
     queryset = Proxy.quality.\
         filter(type__gt=0).\
-        order_by('-quality')
+        order_by('-quality', '-checked')
 
     template_name = 'proxyfinder/list.html'
     paginate_by = 50

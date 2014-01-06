@@ -9,6 +9,7 @@ from socket import AF_INET, SOCK_STREAM
 from os.path import dirname, join
 from datetime import datetime, timedelta
 from re import MULTILINE, findall
+from logging import getLogger
 
 from django.conf import settings as django_settings
 from django.db.transaction import atomic
@@ -53,7 +54,7 @@ DEFAULT_SETTINGS = {
                   443,
                   1080,
                   559, ],
-        'ITERATE_SIZE': 10,
+        'ITERATE_SIZE': 40,
         'NETWORK_TIMEOUT': 5,
     }
 }
@@ -81,6 +82,8 @@ def get_settings():
 
 
 class ProxyChecker(object):
+    logger = getLogger('proxy-checker')
+
     def __init__(self):
         self._local_ip = None
         self._gi4 = GeoIP(join(dirname(__file__), 'GeoIP.dat'),
@@ -92,23 +95,42 @@ class ProxyChecker(object):
     def proxies_iterator(self):
         yield None
 
-    def run(self):
+    def proxies_up_iterator(self):
+        iterate_size = self.settings.CHECK['ITERATE_SIZE']
+        group = []
+
         for proxies in self.proxies_iterator():
+            if not proxies:
+                return
+
+            proxies = self.extend_addresses(proxies)
+
+            for proxy in proxies:
+                proxy.is_get = False
+                proxy.is_post = False
+                proxy.is_anonymously = False
+                proxy.country_code = None
+                proxy.type = 0
+                proxy.checked = now()
+
+            # фильтрация только тех у которых проходит
+            # подключение на порт
+            proxies = self.check_opened(proxies)
+
+            group.extend(proxies)
+
+            if len(group) >= iterate_size:
+                yield group[:iterate_size]
+                group = group[iterate_size:]
+
+        if group:
+            yield group
+
+    def run(self):
+        self.logger.info('Start proxy checking')
+
+        for proxies in self.proxies_up_iterator():
             with atomic():
-                proxies = self.extend_addresses(proxies)
-
-                #
-                for proxy in proxies:
-                    proxy.is_get = False
-                    proxy.is_post = False
-                    proxy.is_anonymously = False
-                    proxy.country_code = None
-                    proxy.type = 0
-
-                # фильтрация только тех у которых проходит
-                # подключение на порт
-                proxies = self.check_opened(proxies)
-
                 for proxy_type in Proxy.TYPE[1:]:
                     # GET
                     self.check_get_request(proxy_type, proxies)
@@ -118,19 +140,21 @@ class ProxyChecker(object):
 
                 for proxy in proxies:
                     if not proxy.type:
-                        pass
-                        #if proxy.pk:
-                        #    proxy.delete()
-                        #else:
-                        #    del proxy
+                        proxy.wrong_count += 1
                     else:
+                        proxy.wrong_count = 0
                         proxy.country_code = self.get_country_code(
                             proxy.address()
                         )
                     proxy.checked = now()
                     proxy.save()
 
-            #return
+                self.logger.info('Checked %d proxies: %d valid' % (
+                    len(proxies),
+                    sum([1 if proxy.type else 0 for proxy in proxies])
+                ))
+
+        self.logger.info('End proxy checking')
 
     def get_country_code(self, ip):
         u"""Код страны по IP"""
@@ -158,14 +182,11 @@ class ProxyChecker(object):
             for proxy in proxies:
                 if proxy.as_tuple() in addresses:
                     continue
-                if not proxy.port:
-                    proxy.port = port
-                else:
-                    other_proxy, _ = Proxy.objects.get_or_create(
-                        ip=proxy.ip,
-                        port=port
-                    )
-                    additional.append(other_proxy)
+                other_proxy, _ = Proxy.objects.get_or_create(
+                    ip=proxy.ip,
+                    port=port
+                )
+                additional.append(other_proxy)
 
         return proxies + additional
 
@@ -195,8 +216,14 @@ class ProxyChecker(object):
         for index, job in enumerate(jobs):
             if job.value:
                 result.append(proxies[index])
-            #elif proxies[index].pk:
-            #    proxies[index].delete()
+            else:
+                proxies[index].wrong_count += 1
+                proxies[index].save()
+
+        self.logger.info('Check opened port for %d hosts: %d up' % (
+            len(proxies),
+            len(result)
+        ))
 
         return result
 
@@ -301,10 +328,10 @@ class DBProxyChecker(ProxyChecker):
         )
         while True:
             proxies = queryset. \
-                order_by('?'). \
                 all()
             proxies = proxies[:self.settings.CHECK['ITERATE_SIZE']]
             yield list(proxies)
+        Proxy.quality.clean_wrong()
 
 
 class DirectProxyChecker(ProxyChecker):
@@ -375,14 +402,14 @@ class ProxyFinder(Spider):
         )
 
         def prepare_ip(ip):
-            ip = list(ip[:2]) + [0, ]
+            ip = list(ip[:2]) + [self.settings.CHECK['PORTS'][0], ]
             ip, port = ip[:2]
             ip = Proxy.ip_to_int(ip)
             port = int(port)
             kwargs = dict(ip=ip, port=port)
             if Proxy.objects.filter(**kwargs).exists():
                 return None
-            return Proxy(**kwargs)
+            return Proxy.objects.get_or_create(**kwargs)
 
         ips = map(prepare_ip, ips)
         ips = filter(lambda ip: ip is not None, ips)
@@ -424,7 +451,12 @@ class ProxyFinder(Spider):
 
         ips = self.get_unique_ips(grab)
         if ips:
-            Proxy.objects.bulk_create(ips)
+            new_ips = filter(
+                lambda item: not item[1],
+                ips
+            )
+            Proxy.objects.bulk_create(map(lambda item: item[0],
+                                          new_ips))
 
         # URL'S STATISTICS
 

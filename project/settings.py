@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'rosetta',
     'pipeline',
     'bootstrap3',
+    'django_extensions',
 
     'layout',
     'proxyfinder',
@@ -242,13 +243,17 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
+        'proxy-checker': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        }
     }
 }
 
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
 

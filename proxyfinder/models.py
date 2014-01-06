@@ -11,6 +11,8 @@ from countries import country_codes
 
 
 class ProxyQualityManager(models.Manager):
+    WRONG_COUNT_FOR_REMOVE = 5
+
     def get_queryset(self):
         queryset = super(ProxyQualityManager, self).get_queryset()
         queryset = queryset.extra(select={
@@ -19,6 +21,10 @@ class ProxyQualityManager(models.Manager):
                        'is_get * 10',
         })
         return queryset
+
+    def clean_wrong(self):
+        queryset = super(ProxyQualityManager, self).get_queryset()
+        queryset.filter(wrong_count__gte=self.WRONG_COUNT_FOR_REMOVE).delete()
 
 
 class Proxy(models.Model):
@@ -31,8 +37,8 @@ class Proxy(models.Model):
     TYPE_CHOICES = [(index, _(value))
                     for index, value in enumerate(TYPE[1:], 1)]
 
-    ip = models.PositiveIntegerField(db_index=True,
-                                     verbose_name=_('Long IP address'))
+    ip = models.IntegerField(db_index=True,
+                             verbose_name=_('Long IP address'))
     port = models.PositiveSmallIntegerField(db_index=True,
                                             verbose_name=_('Port'))
 
@@ -64,6 +70,8 @@ class Proxy(models.Model):
     checked = models.DateTimeField(blank=True,
                                    null=True,
                                    verbose_name=_('Checked at'))
+
+    wrong_count = models.SmallIntegerField(default=0)
 
     objects = models.Manager()
     quality = ProxyQualityManager()
