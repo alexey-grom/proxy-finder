@@ -17,11 +17,11 @@
                         <tr>
                             <td>{% trans '#' %}</td>
                             <td>{% trans 'IP:port' %}</td>
-                            <td>{% trans 'Proxy type' %}</td>
-                            <td>{% trans 'GET' %}</td>
-                            <td>{% trans 'POST' %}</td>
-                            <td>{% trans 'Anonymously' %}</td>
-                            <td>{% trans 'Country' %}</td>
+                            <td class="text-center">{% trans 'Proxy type' %}</td>
+                            <td class="text-center" title="{% trans 'GET' %}">G</td>
+                            <td class="text-center" title="{% trans 'POST' %}">P</td>
+                            <td class="text-center" title="{% trans 'Anonymously' %}">A</td>
+                            <td class="text-center">{% trans 'Country' %}</td>
                             <td>{% trans 'Checked at' %}</td>
                         </tr>
                     </thead>
@@ -30,11 +30,11 @@
                             <tr>
                                 <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
                                 <td>{{ proxy.format }}</td>
-                                <td>{% trans proxy.type_name %}</td>
-                                <td>{{ proxy.is_get|yesno_img }}</td>
-                                <td>{{ proxy.is_post|yesno_img }}</td>
-                                <td>{{ proxy.is_anonymously|yesno_img }}</td>
-                                <td>{{ proxy.country }}</td>
+                                <td class="text-center">{% trans proxy.type_name|upper %}</td>
+                                <td class="text-center">{{ proxy.is_get|yesno_img }}</td>
+                                <td class="text-center">{{ proxy.is_post|yesno_img }}</td>
+                                <td class="text-center">{{ proxy.is_anonymously|yesno_img }}</td>
+                                <td class="text-center" title="{{ proxy.country }}"><i class="flag flag-{{ proxy.country_code|lower }}"></i></td>
                                 <td>{{ proxy.checked|timesince }} {% trans 'ago' %}</td>
                             </tr>
                         {% endfor %}
