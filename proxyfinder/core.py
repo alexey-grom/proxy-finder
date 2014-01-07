@@ -180,7 +180,7 @@ class ProxyChecker(object):
 
         for port in set(self.settings.CHECK['PORTS']):
             for proxy in proxies:
-                if proxy.as_tuple() in addresses:
+                if proxy.as_tuple(port) in addresses:
                     continue
                 other_proxy, _ = Proxy.objects.get_or_create(
                     ip=proxy.ip,

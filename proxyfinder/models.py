@@ -121,8 +121,10 @@ class Proxy(models.Model):
             info.append('anonymously')
         return ' '.join(info)
 
-    def as_tuple(self):
-        return (self.address(), self.port)
+    def as_tuple(self, port=None):
+        if not port:
+            port = self.port
+        return (self.address(), port)
 
     @staticmethod
     def ip_to_int(ip):
