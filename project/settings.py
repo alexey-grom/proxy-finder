@@ -89,6 +89,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.cache.CacheMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'pipeline.middleware.MinifyHTMLMiddleware',
     'django.middleware.gzip.GZipMiddleware',
