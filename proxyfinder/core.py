@@ -446,8 +446,10 @@ class ProxyFinder(Spider):
 
         ips = self.get_unique_ips(grab)
         for ip, port in ips:
-            Proxy.objects.get_or_create(ip=ip,
-                                        port=port)
+            proxy, created = Proxy.objects.get_or_create(ip=ip,
+                                                         port=port)
+            if created:
+                proxy.save()
 
         # URL'S STATISTICS
 
