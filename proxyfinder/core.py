@@ -406,17 +406,10 @@ class ProxyFinder(Spider):
             ip, port = ip[:2]
             ip = Proxy.ip_to_int(ip)
             port = int(port)
-            kwargs = dict(ip=ip, port=port)
-            if Proxy.objects.filter(**kwargs).exists():
-                return None
-            return tuple(kwargs.items())
+            return ip, port,
 
         ips = map(prepare_ip, ips)
-        ips = filter(lambda ip: ip is not None, ips)
-        ips = set(ips)
-        ips = map(lambda item: Proxy(**dict(item)), ips)
-
-        return ips
+        return set(ips)
 
     def get_unviewed_url(self, grab):
         domain, path = Url.split_url(grab.response.url)
@@ -452,8 +445,9 @@ class ProxyFinder(Spider):
         # STORE FOUND IP'S
 
         ips = self.get_unique_ips(grab)
-        if ips:
-            Proxy.objects.bulk_create(ips)
+        for ip, port in ips:
+            Proxy.objects.get_or_create(ip=ip,
+                                        port=port)
 
         # URL'S STATISTICS
 
