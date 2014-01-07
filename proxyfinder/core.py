@@ -170,7 +170,7 @@ class ProxyChecker(object):
     def extend_addresses(self, proxies):
         u"""Дополнение списка проксей возможными портами"""
 
-        additional = []
+        #additional = []
 
         addresses = [
             proxy.as_tuple()
@@ -186,9 +186,9 @@ class ProxyChecker(object):
                     ip=proxy.ip,
                     port=port
                 )
-                additional.append(other_proxy)
+                #additional.append(other_proxy)
 
-        return proxies + additional
+        return proxies
 
     def check_opened(self, proxies):
         u"""Проверка открытости порта"""
