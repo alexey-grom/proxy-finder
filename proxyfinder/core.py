@@ -445,11 +445,14 @@ class ProxyFinder(Spider):
         # STORE FOUND IP'S
 
         ips = self.get_unique_ips(grab)
-        for ip, port in ips:
-            proxy, created = Proxy.objects.get_or_create(ip=ip,
-                                                         port=port)
-            if created:
-                proxy.save()
+        new_hosts = filter(
+            lambda item: not Proxy.objects.filter(ip=item[0]).exists(),
+            ips
+        )
+        Proxy.objects.bulk_create(map(
+            lambda item: Proxy(ip=item[0], port=item[1]),
+            new_hosts
+        ))
 
         # URL'S STATISTICS
 
